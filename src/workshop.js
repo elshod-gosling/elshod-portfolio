@@ -40,16 +40,18 @@ export async function createWorkshop(host, options) {
   controls.enableDamping = options.motion;
   controls.dampingFactor = 0.06;
   controls.enablePan = false;
-  controls.minPolarAngle = 0.55;
-  controls.maxPolarAngle = 1.5;
-  controls.minAzimuthAngle = -0.65;
-  controls.maxAzimuthAngle = 1.4;
-  controls.minDistance = 8;
-  controls.maxDistance = 38;
-  controls.rotateSpeed = 0.55;
-  controls.zoomSpeed = 0.65;
-  controls.target.set(0, 2.1, 0);
-  camera.position.set(11, 7.5, 14);
+  controls.enableZoom = false; // Enabled only when user toggles Free Orbit
+  controls.enableRotate = false; // Enabled only when user toggles Free Orbit
+  controls.minPolarAngle = 0.35;
+  controls.maxPolarAngle = 1.55;
+  controls.minAzimuthAngle = -1.2;
+  controls.maxAzimuthAngle = 1.6;
+  controls.minDistance = 5;
+  controls.maxDistance = 42;
+  controls.rotateSpeed = 0.6;
+  controls.zoomSpeed = 0.7;
+  controls.target.set(0, 2.2, 0);
+  camera.position.set(11.2, 7.2, 14.5);
   const composer = new EffectComposer(renderer);
   composer.renderTarget1.samples = mobile() ? 2 : 4;
   composer.renderTarget2.samples = mobile() ? 2 : 4;
@@ -386,8 +388,59 @@ export async function createWorkshop(host, options) {
     aboutGroup,
   );
   box(4.75, 0.04, 0.03, 0, 3.25, 1.28, cyanGlow);
-  // Real project art runs on the screen inside the lab.
-  function monitor(x, y, z, width, height, texture) {
+
+  // Live animated GLSL Cyberpunk shader for the main monitor screen
+  const cyberScreenShader = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uTexture: { value: shaderImage || new THREE.Texture() },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform float uTime;
+      uniform sampler2D uTexture;
+      varying vec2 vUv;
+
+      void main() {
+        vec2 uv = vUv;
+        // Cyber scanlines
+        float scanline = sin(uv.y * 220.0 + uTime * 6.0) * 0.06;
+        // Perspective digital cyber grid on screen
+        vec2 p = uv * 2.0 - 1.0;
+        float gridY = 0.5 / (abs(p.y) + 0.12) + uTime * 0.6;
+        float gridX = p.x / (abs(p.y) + 0.12);
+        float grid = (step(0.91, fract(gridX * 3.5)) + step(0.91, fract(gridY * 3.5))) * 0.22;
+
+        // Matrix rain / code pulse stream
+        float stream = sin(uv.y * 32.0 - uTime * 10.0 + sin(uv.x * 24.0) * 5.0);
+        stream = smoothstep(0.72, 0.98, stream) * 0.38;
+
+        vec4 tex = texture2D(uTexture, uv);
+        vec3 base = tex.a > 0.05 ? tex.rgb * 1.15 : vec3(0.04, 0.08, 0.16);
+
+        vec3 neonCyan = vec3(0.2, 0.96, 0.9);
+        vec3 neonPink = vec3(1.0, 0.22, 0.72);
+
+        vec3 col = base + neonCyan * (grid + stream) - scanline;
+        col += neonPink * (0.06 * sin(uTime * 1.8 + uv.x * 5.0));
+
+        // Edge vignette / bezel screen gradient
+        float edge = smoothstep(0.0, 0.05, uv.x) * smoothstep(1.0, 0.95, uv.x) *
+                     smoothstep(0.0, 0.05, uv.y) * smoothstep(1.0, 0.95, uv.y);
+        col *= edge;
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `,
+    toneMapped: false,
+  });
+
+  function monitor(x, y, z, width, height, matOrTex) {
     rounded(
       width + 0.14,
       height + 0.14,
@@ -399,13 +452,16 @@ export async function createWorkshop(host, options) {
       0.05,
       aboutGroup,
     );
+    const screenMat = matOrTex instanceof THREE.Material
+      ? matOrTex
+      : new THREE.MeshBasicMaterial({
+          map: matOrTex,
+          color: matOrTex ? 0xffffff : 0x2c8394,
+          toneMapped: false,
+        });
     const screen = new THREE.Mesh(
       new THREE.PlaneGeometry(width, height),
-      new THREE.MeshBasicMaterial({
-        map: texture,
-        color: texture ? 0xffffff : 0x2c8394,
-        toneMapped: false,
-      }),
+      screenMat,
     );
     screen.position.set(x, y, z + 0.066);
     aboutGroup.add(screen);
@@ -429,14 +485,21 @@ export async function createWorkshop(host, options) {
       aboutGroup,
     );
   }
-  monitor(-0.85, 2.26, 0.62, 1.55, 0.87, shaderImage);
+  monitor(-0.85, 2.26, 0.62, 1.55, 0.87, cyberScreenShader);
+
   const codeTexture = textTexture(
-    ["> elshod@night-lab", "  building something good_"],
+    [
+      "> elshod@night-lab:~$",
+      "  init shaders --target GLSL",
+      "  Iris / OptiFine [OK]",
+      "  120 FPS · Tashkent UTC+5",
+      "  building next gen...",
+    ],
     {
       color: "#83f8dc",
       background: "#081923",
-      size: 37,
-      font: "400",
+      size: 26,
+      font: "500",
       width: 768,
       height: 400,
       align: "left",
@@ -977,138 +1040,215 @@ export async function createWorkshop(host, options) {
   });
   const rain = new THREE.LineSegments(rainGeometry, rainMaterial);
   scene.add(rain);
-  const hotspots = [
-    ["projects", v3(3.75, 2.05, 1.28)],
-    ["about", v3(-0.8, 2.7, 1.1)],
-    ["honors", v3(-0.4, 5.65, 0.05)],
-    ["contact", v3(-3.6, 2.75, 2.1)],
-  ].map(([id, p]) => ({
-    id,
-    p,
-    el: document.querySelector(`[data-spot="${id}"]`),
-  }));
-  const projected = new THREE.Vector3();
-  function updateHotspots() {
-    for (const spot of hotspots) {
-      projected.copy(spot.p).project(camera);
-      const x = (projected.x * 0.5 + 0.5) * host.clientWidth,
-        y = (-projected.y * 0.5 + 0.5) * host.clientHeight;
-      spot.el.style.left = `${x}px`;
-      spot.el.style.top = `${y}px`;
-      const visible =
-        projected.z < 1 &&
-        x > 18 &&
-        x < host.clientWidth - 30 &&
-        y > 100 &&
-        y < host.clientHeight - 170;
-      spot.el.dataset.visible = String(visible);
-      spot.el.inert = !visible;
-      spot.el.classList.toggle(
-        "flip",
-        x > host.clientWidth - (mobile() ? 100 : 200),
-      );
-    }
+  // Floating atmospheric dust / cyber spark motes
+  const particleCount = mobile() ? 110 : 240;
+  const particleGeo = new THREE.BufferGeometry();
+  const pPositions = new Float32Array(particleCount * 3);
+  const pColors = new Float32Array(particleCount * 3);
+  const pBaseY = new Float32Array(particleCount);
+  const pSpeeds = new Float32Array(particleCount);
+
+  const colCyan = new THREE.Color(CYAN);
+  const colPink = new THREE.Color(PINK);
+  const colGold = new THREE.Color(GOLD);
+
+  for (let i = 0; i < particleCount; i++) {
+    pPositions[i * 3 + 0] = (random() - 0.5) * 12;
+    const py = 0.35 + random() * 5.2;
+    pPositions[i * 3 + 1] = py;
+    pBaseY[i] = py;
+    pPositions[i * 3 + 2] = (random() - 0.5) * 9;
+
+    const col = i % 3 === 0 ? colCyan : i % 3 === 1 ? colPink : colGold;
+    pColors[i * 3 + 0] = col.r;
+    pColors[i * 3 + 1] = col.g;
+    pColors[i * 3 + 2] = col.b;
+
+    pSpeeds[i] = 0.35 + random() * 0.75;
   }
+
+  particleGeo.setAttribute("position", new THREE.BufferAttribute(pPositions, 3));
+  particleGeo.setAttribute("color", new THREE.BufferAttribute(pColors, 3));
+
+  const particleMat = new THREE.PointsMaterial({
+    size: mobile() ? 0.05 : 0.075,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.85,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const dustParticles = new THREE.Points(particleGeo, particleMat);
+  scene.add(dustParticles);
+
+  // Holographic floating station markers
+  function createHoloRing(x, y, z, color, radius) {
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(radius, 0.015, 8, 32),
+      new THREE.MeshBasicMaterial({
+        color: new THREE.Color(color).multiplyScalar(1.5),
+        transparent: true,
+        opacity: 0.6,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        toneMapped: false,
+      }),
+    );
+    ring.rotation.x = Math.PI / 2;
+    ring.position.set(x, y, z);
+    root.add(ring);
+    return ring;
+  }
+  const holoProjects = createHoloRing(3.34, 0.28, 1.15, CYAN, 0.65);
+  const holoAbout = createHoloRing(-0.4, 0.28, 1.35, PINK, 0.75);
+  const holoHonors = createHoloRing(-0.4, 4.45, 0.05, GOLD, 0.55);
+  const holoContact = createHoloRing(-3.45, 0.28, 1.9, CYAN, 0.58);
+
+  // Cinematic Camera Splines (POV on Scroll)
+  // 0.00: Home (Wide diorama establishing shot)
+  // 0.25: Projects (Vending machine terminal close-up)
+  // 0.50: About (Workbench & dual screen command desk)
+  // 0.75: Honors (Rooftop golden star trophy & antenna)
+  // 1.00: Contact (Hotline payphone booth & signboards)
+  const cameraCurve = new THREE.CatmullRomCurve3(
+    [
+      v3(11.2, 7.2, 14.5), // Station 0: Home
+      v3(6.2, 3.4, 5.2),   // Station 1: Projects
+      v3(-0.25, 2.32, 3.1),// Station 2: About
+      v3(1.8, 5.6, 6.2),   // Station 3: Honors
+      v3(-5.2, 3.1, 5.2),  // Station 4: Contact
+    ],
+    false,
+    "catmullrom",
+    0.2,
+  );
+
+  const targetCurve = new THREE.CatmullRomCurve3(
+    [
+      v3(0, 2.2, 0),        // Station 0: Home
+      v3(3.34, 1.6, 0.85),  // Station 1: Projects
+      v3(-0.45, 2.15, 0.7), // Station 2: About
+      v3(-0.4, 4.75, 0.0),  // Station 3: Honors
+      v3(-3.45, 1.95, 1.8), // Station 4: Contact
+    ],
+    false,
+    "catmullrom",
+    0.2,
+  );
 
   let motion = options.motion,
     raf = 0,
     lastFrame = 0,
     time = 0,
-    view = "home",
-    isEntered = false,
-    tween = null,
     frameCount = 0,
+    dirty = true,
+    scrollProgress = 0,
+    targetScrollProgress = 0,
+    isFreeOrbit = false;
+
+  const pointer = new THREE.Vector2(0, 0);
+  window.addEventListener("pointermove", (e) => {
+    pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
     dirty = true;
-  const poses = {
-    home: [11.5, 7.4, 14.5, 0, 2.35, 0],
-    projects: [9, 5.7, 10, 1.2, 2, 0.3],
-    about: [5.6, 4.8, 10, -0.2, 2.2, 0.5],
-    honors: [7, 7.5, 11, -0.2, 3, 0.1],
-    contact: [4.5, 5.3, 12, -1.4, 2, 1],
-  };
-  function desiredPose(id) {
-    const p = [...poses[id]];
-    if (mobile()) {
-      p[0] = id === "home" ? 12 : 10;
-      p[1] = 9;
-      p[2] = id === "home" ? 21 : 19;
-      p[3] = 0;
-      p[4] = id === "home" ? 2.45 : 1.7;
-      p[5] = 0.2;
-    } else if (id !== "home") {
-      p[3] += 2.1;
-    } else if (!isEntered) {
-      p[3] -= 1.9;
-    }
-    return p;
-  }
-  function moveTo(id, immediate = false) {
-    view = id;
-    const p = desiredPose(id);
-    if (immediate || !motion) {
-      camera.position.set(...p.slice(0, 3));
-      controls.target.set(...p.slice(3));
-      controls.update();
-      dirty = true;
-    } else
-      tween = {
-        from: camera.position.clone(),
-        targetFrom: controls.target.clone(),
-        to: v3(...p.slice(0, 3)),
-        targetTo: v3(...p.slice(3)),
-        start: performance.now(),
-        duration: 1300,
-      };
     schedule();
-  }
+  });
+
   const originalReflect = floor.onBeforeRender;
   floor.onBeforeRender = function (...args) {
-    if (frameCount % 3 === 0 || dirty || tween)
+    if (frameCount % 3 === 0 || dirty)
       originalReflect.apply(this, args);
   };
+
   function draw(now) {
     raf = 0;
     if (document.hidden) return;
-    const interval = mobile() ? 1000 / 30 : 1000 / 45;
+    const interval = mobile() ? 1000 / 30 : 1000 / 60;
     if (now - lastFrame < interval) {
       schedule();
       return;
     }
     const dt = lastFrame ? Math.min((now - lastFrame) / 1000, 0.08) : 0;
     lastFrame = now;
-    if (tween) {
-      const linear = Math.min(1, (now - tween.start) / tween.duration),
-        eased = 1 - Math.pow(1 - linear, 3);
-      camera.position.lerpVectors(tween.from, tween.to, eased);
-      controls.target.lerpVectors(tween.targetFrom, tween.targetTo, eased);
-      if (linear === 1) tween = null;
+
+    // Smooth scroll camera interpolation
+    if (motion) {
+      scrollProgress += (targetScrollProgress - scrollProgress) * 0.085;
+    } else {
+      scrollProgress = targetScrollProgress;
+    }
+    if (Math.abs(targetScrollProgress - scrollProgress) > 0.0003) {
       dirty = true;
     }
+
+    if (!isFreeOrbit) {
+      const p = THREE.MathUtils.clamp(scrollProgress, 0, 1);
+      const baseCamPos = cameraCurve.getPointAt(p);
+      const baseTarget = targetCurve.getPointAt(p);
+
+      if (mobile()) {
+        const diff = baseCamPos.clone().sub(baseTarget);
+        diff.multiplyScalar(1.22);
+        diff.y += 0.55;
+        baseCamPos.copy(baseTarget).add(diff);
+      }
+
+      // Smooth mouse parallax
+      const parX = pointer.x * (mobile() ? 0.12 : 0.35);
+      const parY = pointer.y * (mobile() ? 0.09 : 0.25);
+
+      camera.position.set(baseCamPos.x + parX, baseCamPos.y + parY, baseCamPos.z);
+      controls.target.set(baseTarget.x, baseTarget.y, baseTarget.z);
+    }
+
+    controls.update();
+
     if (motion) {
       time += dt;
-      fanBlades.rotation.z += dt * 2;
+      fanBlades.rotation.z += dt * 2.2;
       robot.rotation.y = -0.25 + Math.sin(time * 0.8) * 0.12;
       star.rotation.y = Math.sin(time * 0.6) * 0.25;
       rainMaterial.uniforms.uTime.value = time;
       floor.material.uniforms.uTime.value = time;
+      cyberScreenShader.uniforms.uTime.value = time;
+
+      // Atmospheric particles bobbing
+      const pArr = dustParticles.geometry.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        pArr[i * 3 + 1] = pBaseY[i] + Math.sin(time * pSpeeds[i] + i) * 0.22;
+        pArr[i * 3 + 0] += Math.cos(time * 0.3 * pSpeeds[i] + i) * 0.001;
+      }
+      dustParticles.geometry.attributes.position.needsUpdate = true;
+
+      // Holographic station ring pulses
+      holoProjects.rotation.z += dt * 0.4;
+      holoAbout.rotation.z -= dt * 0.35;
+      holoHonors.rotation.z += dt * 0.5;
+      holoContact.rotation.z -= dt * 0.45;
+
+      holoProjects.material.opacity = 0.4 + Math.sin(time * 2.5) * 0.18;
+      holoAbout.material.opacity = 0.4 + Math.sin(time * 2.2 + 1.0) * 0.18;
+      holoHonors.material.opacity = 0.45 + Math.sin(time * 2.8 + 2.0) * 0.18;
+      holoContact.material.opacity = 0.4 + Math.sin(time * 2.0 + 3.0) * 0.18;
     }
-    controls.update();
+
     frameCount++;
-    updateHotspots();
     composer.render();
     dirty = false;
-    if (motion || tween || controls.enableDamping) schedule();
+    if (motion || Math.abs(targetScrollProgress - scrollProgress) > 0.0003 || controls.enableDamping) {
+      schedule();
+    }
   }
+
   function schedule() {
     if (!raf && !document.hidden) raf = requestAnimationFrame(draw);
   }
-  controls.addEventListener("start", () => {
-    tween = null;
-  });
+
   controls.addEventListener("change", () => {
     dirty = true;
     schedule();
   });
+
   function resize() {
     const w = host.clientWidth,
       h = host.clientHeight;
@@ -1117,11 +1257,11 @@ export async function createWorkshop(host, options) {
     renderer.setSize(w, h, false);
     composer.setSize(w, h);
     bloom.resolution.set(w * 0.7, h * 0.7);
-    moveTo(view, true);
     dirty = true;
     schedule();
   }
   new ResizeObserver(resize).observe(host);
+
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
       if (raf) cancelAnimationFrame(raf);
@@ -1129,90 +1269,39 @@ export async function createWorkshop(host, options) {
       lastFrame = 0;
     } else schedule();
   });
-  const raycaster = new THREE.Raycaster(),
-    pointer = new THREE.Vector2();
+
+  // 3D Click Interaction to fly to stations
+  const raycaster = new THREE.Raycaster();
   let down = null;
   renderer.domElement.addEventListener("pointerdown", (event) => {
     down = { x: event.clientX, y: event.clientY };
   });
   renderer.domElement.addEventListener("pointerup", (event) => {
     if (
-      !isEntered ||
       !down ||
-      Math.hypot(event.clientX - down.x, event.clientY - down.y) > 7
+      Math.hypot(event.clientX - down.x, event.clientY - down.y) > 8
     ) {
       down = null;
       return;
     }
     const rect = host.getBoundingClientRect();
-    pointer.set(
+    const clickPointer = new THREE.Vector2(
       ((event.clientX - rect.left) / rect.width) * 2 - 1,
       (-(event.clientY - rect.top) / rect.height) * 2 + 1,
     );
-    raycaster.setFromCamera(pointer, camera);
+    raycaster.setFromCamera(clickPointer, camera);
     const hits = raycaster.intersectObjects(root.children, true);
     for (const hit of hits) {
       let o = hit.object;
       while (o && !o.userData.section) o = o.parent;
-      if (o?.userData.section) {
+      if (o?.userData.section && options.onSelect) {
         options.onSelect(o.userData.section);
         break;
       }
     }
     down = null;
   });
-  renderer.domElement.addEventListener("pointermove", (event) => {
-    if (!isEntered) return;
-    const rect = host.getBoundingClientRect();
-    pointer.set(
-      ((event.clientX - rect.left) / rect.width) * 2 - 1,
-      (-(event.clientY - rect.top) / rect.height) * 2 + 1,
-    );
-    raycaster.setFromCamera(pointer, camera);
-    const hit = raycaster.intersectObjects(root.children, true)[0];
-    let o = hit?.object;
-    while (o && !o.userData.section) o = o.parent;
-    renderer.domElement.style.cursor = o ? "pointer" : "grab";
-  });
-  host.addEventListener("keydown", (event) => {
-    if (
-      !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "+", "-"].includes(
-        event.key,
-      )
-    )
-      return;
-    event.preventDefault();
-    tween = null;
-    const delta = camera.position.clone().sub(controls.target);
-    const spherical = new THREE.Spherical().setFromVector3(delta);
-    if (event.key === "ArrowLeft") spherical.theta -= 0.08;
-    if (event.key === "ArrowRight") spherical.theta += 0.08;
-    if (event.key === "ArrowUp") spherical.phi -= 0.06;
-    if (event.key === "ArrowDown") spherical.phi += 0.06;
-    if (event.key === "+") spherical.radius *= 0.92;
-    if (event.key === "-") spherical.radius *= 1.08;
-    spherical.theta = THREE.MathUtils.clamp(
-      spherical.theta,
-      controls.minAzimuthAngle,
-      controls.maxAzimuthAngle,
-    );
-    spherical.phi = THREE.MathUtils.clamp(
-      spherical.phi,
-      controls.minPolarAngle,
-      controls.maxPolarAngle,
-    );
-    spherical.radius = THREE.MathUtils.clamp(
-      spherical.radius,
-      controls.minDistance,
-      controls.maxDistance,
-    );
-    camera.position
-      .copy(controls.target)
-      .add(new THREE.Vector3().setFromSpherical(spherical));
-    controls.update();
-    dirty = true;
-    schedule();
-  });
+
   renderer.domElement.addEventListener("webglcontextlost", (event) => {
     event.preventDefault();
     if (raf) cancelAnimationFrame(raf);
@@ -1226,24 +1315,37 @@ export async function createWorkshop(host, options) {
     dirty = true;
     schedule();
   });
+
   resize();
-  moveTo("home", true);
   composer.render();
+
   return {
-    enter() {
-      isEntered = true;
-      moveTo("home");
-    },
-    focus(id) {
-      moveTo(id);
-    },
-    reset() {
-      moveTo("home");
+    setScrollProgress(p) {
+      targetScrollProgress = THREE.MathUtils.clamp(p, 0, 1);
+      dirty = true;
+      schedule();
     },
     setMotion(enabled) {
       motion = enabled;
       controls.enableDamping = enabled;
       lastFrame = 0;
+      dirty = true;
+      schedule();
+    },
+    toggleOrbit(enabled) {
+      isFreeOrbit = typeof enabled === "boolean" ? enabled : !isFreeOrbit;
+      controls.enableZoom = isFreeOrbit;
+      controls.enableRotate = isFreeOrbit;
+      dirty = true;
+      schedule();
+      return isFreeOrbit;
+    },
+    reset() {
+      targetScrollProgress = 0;
+      scrollProgress = 0;
+      isFreeOrbit = false;
+      controls.enableZoom = false;
+      controls.enableRotate = false;
       dirty = true;
       schedule();
     },

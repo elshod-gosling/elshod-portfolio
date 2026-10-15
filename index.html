@@ -45,23 +45,34 @@
         id="world"
         tabindex="0"
         role="img"
-        aria-label="A neon-lit 3D workshop on a rainy night. Drag to orbit and scroll to zoom. Explore the labeled objects or use the navigation below."
+        aria-label="A neon-lit 3D workshop on a rainy night in Tashkent. Scroll to travel through the lab, or hover for parallax."
       ></div>
       <div class="vignette" aria-hidden="true"></div>
       <div class="grain" aria-hidden="true"></div>
+
       <header class="header">
         <button
           class="brand"
-          data-section="home"
-          aria-label="Return to the workshop"
+          data-station="0"
+          aria-label="Return to the workshop overview"
         >
-          <span class="brand-icon" aria-hidden="true">e<span>_</span></span
-          ><span>ELSHOD’S<span>NIGHT LAB</span></span>
+          <span class="brand-icon" aria-hidden="true">e<span>_</span></span>
+          <span>ELSHOD’S<span>NIGHT LAB</span></span>
         </button>
         <div class="header-right">
           <span class="time-display"
             ><i></i>UZBEKISTAN <time id="local-time">UTC+5</time></span
-          ><button
+          >
+          <button
+            id="orbit-toggle"
+            class="icon-button"
+            aria-pressed="false"
+            aria-label="Toggle Free 3D Orbit Mode"
+            title="Toggle Free 3D Orbit Mode"
+          >
+            <span aria-hidden="true">⟲</span>
+          </button>
+          <button
             id="sound-toggle"
             class="icon-button"
             aria-pressed="false"
@@ -69,8 +80,9 @@
           >
             <span class="sound-icon" aria-hidden="true"
               ><i></i><i></i><i></i><i></i
-            ></span></button
-          ><button
+            ></span>
+          </button>
+          <button
             id="motion-toggle"
             class="icon-button"
             aria-pressed="false"
@@ -80,112 +92,236 @@
           </button>
         </div>
       </header>
-      <div id="intro" class="intro">
-        <span class="eyebrow"><i></i> OPEN AFTER DARK</span>
-        <h1>A little corner <br />of the <em>internet.</em></h1>
-        <p>
-          Code, curiosity & a few late nights. <br />Welcome to Elshodbek’s
-          world.
-        </p>
-        <button id="enter-button" class="enter-button">
-          Step inside <span>↗</span></button
-        ><span id="load-status" role="status">Warming up the neon…</span>
+
+      <!-- Scroll-Driven POV Storytelling Track -->
+      <div id="scroll-container" class="scroll-container" tabindex="0">
+        <!-- 00: HERO / THE LAB OVERVIEW -->
+        <section class="story-section station-home" data-station="0">
+          <div class="story-card hero-card">
+            <span class="eyebrow"><i></i> OPEN AFTER DARK · TASHKENT</span>
+            <h1>A little corner <br />of the <em>internet.</em></h1>
+            <p>
+              Software, shaders & late-night code in Uzbekistan.<br />
+              Welcome to Elshodbek’s Night Lab.
+            </p>
+            <div class="hero-actions">
+              <button class="action-btn" data-station="1">
+                Explore Projects <span>↓</span>
+              </button>
+              <span id="load-status" class="load-status">Neon warming up…</span>
+            </div>
+            <div class="scroll-hint">
+              <span class="mouse-icon"><i></i></span>
+              <span>SCROLL TO TRAVEL</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 01: THE PROJECTS VENDING MACHINE -->
+        <section class="story-section station-projects" data-station="1">
+          <div class="story-card projects-card">
+            <div class="card-badge">01 / THE PROJECT RACK</div>
+            <h2>Ideas, out in the wild.</h2>
+            <p class="card-sub">
+              Pick something off the shelf. Real-time shaders, AI full-stack platforms, and developer tools.
+            </p>
+            <div class="projects-list">
+              <article class="project-box">
+                <div class="project-meta">
+                  <span class="project-num">01 / GRAPHICS</span>
+                  <span class="project-tag">GLSL · OptiFine / Iris</span>
+                </div>
+                <h3>Cyberpunk Shader</h3>
+                <p>A cinematic shader pack giving Minecraft Java neon color palettes, volumetric lighting, and cyberpunk mood.</p>
+                <div class="project-links">
+                  <a href="https://github.com/elshod-gosling/Cyberpunk-shader-.build" target="_blank" rel="noopener noreferrer" class="link-chip">GitHub ↗</a>
+                  <a href="https://www.curseforge.com/members/elshodbek/projects" target="_blank" rel="noopener noreferrer" class="link-chip secondary">CurseForge ↗</a>
+                </div>
+              </article>
+
+              <article class="project-box">
+                <div class="project-meta">
+                  <span class="project-num">02 / AI & FULL STACK</span>
+                  <span class="project-tag">Next.js · Python · FastAPI</span>
+                </div>
+                <h3>FinFlow AI</h3>
+                <p>AI-assisted financial visibility & business intelligence for SMEs in Uzbekistan. Built with the FstudentsTTT hackathon team.</p>
+                <div class="project-links">
+                  <a href="https://github.com/FstudentsTTT/FinFlow" target="_blank" rel="noopener noreferrer" class="link-chip">GitHub ↗</a>
+                </div>
+              </article>
+
+              <article class="project-box">
+                <div class="project-meta">
+                  <span class="project-num">03 / INTERACTIVE</span>
+                  <span class="project-tag">EdTech · EN / UZ / RU</span>
+                </div>
+                <h3>ZEHN-EDU</h3>
+                <p>A multilingual arcade turning coding, logic, typing, and digital problem-solving into approachable visual challenges.</p>
+                <div class="project-links">
+                  <a href="https://github.com/elshod-gosling/ZEHN-EDU" target="_blank" rel="noopener noreferrer" class="link-chip">GitHub ↗</a>
+                  <a href="https://elshod-gosling.github.io/ZEHN-EDU/" target="_blank" rel="noopener noreferrer" class="link-chip secondary">Live Demo ↗</a>
+                </div>
+              </article>
+
+              <article class="project-box">
+                <div class="project-meta">
+                  <span class="project-num">04 / DEVELOPER TOOLS</span>
+                  <span class="project-tag">Python · Open Source</span>
+                </div>
+                <h3>elab</h3>
+                <p>Open-source Python utility suite crafted to streamline developer workflows and everyday scripting.</p>
+                <div class="project-links">
+                  <a href="https://github.com/elshod-gosling/elab" target="_blank" rel="noopener noreferrer" class="link-chip">GitHub ↗</a>
+                </div>
+              </article>
+            </div>
+            <a class="more-link" href="https://github.com/elshod-gosling?tab=repositories" target="_blank" rel="noopener noreferrer">
+              View all repositories on GitHub <span>↗</span>
+            </a>
+          </div>
+        </section>
+
+        <!-- 02: THE DEVELOPER WORKBENCH -->
+        <section class="story-section station-about" data-station="2">
+          <div class="story-card about-card">
+            <div class="card-badge">02 / THE DEVELOPER</div>
+            <h2>The human behind<br />the screen.</h2>
+            <p class="card-sub">
+              Hey, I’m <span class="highlight">Elshodbek Ermuxammadov</span>, a developer from Uzbekistan. 
+              I live where technical depth meets creative execution. One day it’s low-level systems algorithms, 
+              the next it’s a GLSL shader changing the entire atmosphere of a world.
+            </p>
+            <div class="skills-grid">
+              <div class="skill-group">
+                <span class="skill-label">SYSTEMS & ARCHITECTURE</span>
+                <p>C++ · Python · TypeScript<br />Algorithms & full-stack development</p>
+              </div>
+              <div class="skill-group">
+                <span class="skill-label">SHADERS & GRAPHICS</span>
+                <p>GLSL · WebGL · Three.js · Blender<br />Shaders & real-time rendering</p>
+              </div>
+              <div class="skill-group">
+                <span class="skill-label">AFTER HOURS & TOOLS</span>
+                <p>C# · Unity · Linux · FastAPI<br />Game mechanics & open source</p>
+              </div>
+            </div>
+            <a class="collab-box" href="https://github.com/orgs/FstudentsTTT/repositories" target="_blank" rel="noopener noreferrer">
+              <span>Also building with <b>FstudentsTTT</b></span>
+              <span>↗</span>
+            </a>
+          </div>
+        </section>
+
+        <!-- 03: SIDE QUESTS & HONORS -->
+        <section class="story-section station-honors" data-station="3">
+          <div class="story-card honors-card">
+            <div class="card-badge">03 / SIDE QUESTS & HONORS</div>
+            <h2>A competitive<br />streak.</h2>
+            <p class="card-sub">
+              Mathematics, algorithmic reasoning, and the grit to push through complex problem domains.
+            </p>
+            <div class="honors-grid">
+              <div class="honor-tile first-place">
+                <span class="honor-year">2026</span>
+                <div class="honor-details">
+                  <h3>Purple Comet</h3>
+                  <p>International Math Competition · Uzbekistan</p>
+                </div>
+                <div class="honor-rank">1st<small>PLACE</small></div>
+              </div>
+              <div class="honor-tile">
+                <span class="honor-year">2025</span>
+                <div class="honor-details">
+                  <h3>Regional STEM Olympiad</h3>
+                  <p>Applied science & logical problem solving</p>
+                </div>
+                <div class="honor-rank">3rd<small>PLACE</small></div>
+              </div>
+              <div class="honor-tile">
+                <span class="honor-year">2024</span>
+                <div class="honor-details">
+                  <h3>Computer Science Olympiad</h3>
+                  <p>Regional · Informatics & algorithms</p>
+                </div>
+                <div class="honor-rank">3rd<small>PLACE</small></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 04: THE HOTLINE / CONTACT -->
+        <section class="story-section station-contact" data-station="4">
+          <div class="story-card contact-card">
+            <div class="card-badge">04 / THE HOTLINE</div>
+            <h2>Good things start<br />with a hello.</h2>
+            <p class="card-sub">
+              Got a project, collaboration, or a wonderfully weird idea? The night lab is open.
+            </p>
+            <div class="contact-channels">
+              <a href="https://t.me/elshod_gosling" target="_blank" rel="noopener noreferrer" class="contact-node featured">
+                <span class="node-label">TELEGRAM</span>
+                <span class="node-val">@elshod_gosling ↗</span>
+              </a>
+              <a href="https://github.com/elshod-gosling" target="_blank" rel="noopener noreferrer" class="contact-node">
+                <span class="node-label">GITHUB</span>
+                <span class="node-val">elshod-gosling ↗</span>
+              </a>
+              <a href="https://instagram.com/elshod.for.real" target="_blank" rel="noopener noreferrer" class="contact-node">
+                <span class="node-label">INSTAGRAM</span>
+                <span class="node-val">@elshod.for.real ↗</span>
+              </a>
+              <a href="https://www.curseforge.com/members/elshodbek/projects" target="_blank" rel="noopener noreferrer" class="contact-node">
+                <span class="node-label">CURSEFORGE</span>
+                <span class="node-val">elshodbek ↗</span>
+              </a>
+            </div>
+            <div class="contact-footnote">
+              <span>BASED IN UZBEKISTAN · UTC+5</span>
+              <span>ALWAYS CURIOUS ABOUT WHAT’S NEXT.</span>
+            </div>
+          </div>
+        </section>
       </div>
-      <div
-        id="hotspots"
-        class="hotspots"
-        inert
-        aria-label="Explore the workshop"
-      >
-        <button
-          class="hotspot"
-          aria-label="Explore projects"
-          data-spot="projects"
-          data-section="projects"
-        >
-          <span class="spot-ring"></span
-          ><span class="spot-label">01 <b>THE PROJECTS</b> ↗</span>
-        </button>
-        <button
-          class="hotspot"
-          aria-label="Meet Elshodbek"
-          data-spot="about"
-          data-section="about"
-        >
-          <span class="spot-ring"></span
-          ><span class="spot-label">02 <b>THE DEVELOPER</b> ↗</span>
-        </button>
-        <button
-          class="hotspot"
-          aria-label="Explore honors"
-          data-spot="honors"
-          data-section="honors"
-        >
-          <span class="spot-ring"></span
-          ><span class="spot-label">03 <b>THE SIDE QUESTS</b> ↗</span>
-        </button>
-        <button
-          class="hotspot"
-          aria-label="Contact Elshodbek"
-          data-spot="contact"
-          data-section="contact"
-        >
-          <span class="spot-ring"></span
-          ><span class="spot-label">04 <b>SAY HELLO</b> ↗</span>
-        </button>
-      </div>
-      <div id="scene-hint" class="scene-hint">
-        <span class="hint-dot"></span> FOLLOW YOUR CURIOSITY. CLICK SOMETHING
-        THAT GLOWS.
-      </div>
+
+      <!-- Dock Navigation -->
       <nav id="navigation" class="dock" aria-label="Portfolio navigation">
-        <button data-section="home" aria-current="page">
-          <span aria-hidden="true">⌂</span><b>The lab</b></button
-        ><span class="dock-divider" aria-hidden="true"></span
-        ><button data-section="projects">
-          <span aria-hidden="true">▦</span><b>Projects</b></button
-        ><button data-section="about">
-          <span aria-hidden="true">☺</span><b>About</b></button
-        ><button data-section="honors">
-          <span aria-hidden="true">✧</span><b>Honors</b></button
-        ><button data-section="contact">
+        <button data-station="0" class="active" aria-current="page">
+          <span aria-hidden="true">⌂</span><b>The lab</b>
+        </button>
+        <span class="dock-divider" aria-hidden="true"></span>
+        <button data-station="1">
+          <span aria-hidden="true">▦</span><b>Projects</b>
+        </button>
+        <button data-station="2">
+          <span aria-hidden="true">☺</span><b>About</b>
+        </button>
+        <button data-station="3">
+          <span aria-hidden="true">✧</span><b>Honors</b>
+        </button>
+        <button data-station="4">
           <span aria-hidden="true">↗</span><b>Contact</b>
         </button>
       </nav>
+
+      <!-- Scroll Progress Bar -->
+      <div class="progress-hud" aria-hidden="true">
+        <span id="station-indicator">01 / 05</span>
+        <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+      </div>
+
       <footer class="scene-footer">
         <span
           >BUILT WITH CURIOSITY <span class="footer-star">✳</span>
           <span id="year">2026</span></span
-        ><button id="reset-view">RESET VIEW ↺</button
-        ><span class="drag-note">DRAG TO ORBIT <i>·</i> SCROLL TO ZOOM</span>
+        >
+        <button id="reset-view">RESET VIEW ↺</button>
+        <span class="drag-note">SCROLL TO TRAVEL <i>·</i> HOVER FOR 3D PARALLAX</span>
       </footer>
-      <aside
-        id="content-panel"
-        class="content-panel"
-        aria-labelledby="panel-title"
-        hidden
-      >
-        <div class="panel-header">
-          <span id="panel-eyebrow" class="eyebrow"></span
-          ><button
-            id="panel-close"
-            class="icon-button"
-            aria-label="Close panel"
-          >
-            ✕
-          </button>
-        </div>
-        <div class="panel-scroll">
-          <h2 id="panel-title"></h2>
-          <div id="panel-content"></div>
-        </div>
-        <div class="panel-bottom">
-          <span><i></i> ANOTHER LATE-NIGHT IDEA.</span><span>EL / 26</span>
-        </div>
-      </aside>
+
       <div id="scene-error" class="scene-error" hidden>
         <p>The workshop is taking a night off on this device.</p>
-        <span>You can still explore everything using the menu below.</span>
+        <span>You can still explore everything using the navigation above.</span>
       </div>
       <div id="announcement" class="sr-only" aria-live="polite"></div>
     </main>

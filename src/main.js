@@ -1,159 +1,108 @@
 import "./style.css";
-import { projects } from "./projects.js";
 
 const $ = (selector) => document.querySelector(selector);
-const panel = $("#content-panel");
-const panelContent = $("#panel-content");
-const panelTitle = $("#panel-title");
+const scrollContainer = $("#scroll-container");
+const progressFill = $("#progress-fill");
+const stationIndicator = $("#station-indicator");
 const announcement = $("#announcement");
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
-let workshop,
-  entered = false,
-  section = "home",
-  opener;
+
+let workshop = null;
+let currentStation = 0;
+let isFreeOrbit = false;
 let motionOn = !reducedMotion.matches;
 try {
   if (localStorage.getItem("night-lab-motion") === "off") motionOn = false;
 } catch {}
 
-const projectSummaries = {
-  cyberpunk: [
-    "01 / REAL-TIME GRAPHICS",
-    "A different atmosphere for Minecraft Java.",
-    "GLSL · OPTIFINE / IRIS",
-  ],
-  finflow: [
-    "02 / AI & FULL STACK",
-    "Financial clarity, built with FstudentsTTT.",
-    "NEXT.JS · PYTHON · FASTAPI",
-  ],
-  zehn: [
-    "03 / INTERACTIVE LEARNING",
-    "A multilingual learning arcade.",
-    "EDTECH · EN / UZ / RU",
-  ],
-  elab: [
-    "04 / DEVELOPER TOOLS",
-    "Useful Python helpers for everyday building.",
-    "PYTHON · OPEN SOURCE",
-  ],
-};
+// Update scroll progress & camera POV along the Catmull-Rom spline
+function handleScroll() {
+  if (!scrollContainer) return;
+  const maxScroll = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+  const progress = maxScroll > 0 ? scrollContainer.scrollTop / maxScroll : 0;
 
-function enter() {
-  if (entered) return;
-  entered = true;
-  document.body.classList.add("entered");
-  $("#intro").inert = true;
-  $("#hotspots").inert = false;
-  workshop?.enter();
-  announcement.textContent =
-    "Welcome to the Night Lab. Explore the glowing objects or use the navigation.";
-}
-$("#enter-button").addEventListener("click", () => {
-  enter();
-  $("#navigation button").focus({ preventScroll: true });
-});
-
-function renderProjects() {
-  panelTitle.textContent = "Ideas, out in the wild.";
-  panelContent.innerHTML = `<p class="panel-intro">Pick something off the shelf. Everything here started with a little curiosity.</p>${Object.entries(
-    projects,
-  )
-    .map(
-      ([id, p]) =>
-        `<button class="project-row" data-project="${id}"><span class="project-row-top"><span>${projectSummaries[id][0]}</span><span>↗</span></span><h3>${p.title}</h3><p>${projectSummaries[id][1]}</p><div class="row-tags">${projectSummaries[id][2]}</div></button>`,
-    )
-    .join(
-      "",
-    )}<a class="panel-link secondary" href="https://github.com/elshod-gosling?tab=repositories" target="_blank" rel="noopener noreferrer">All repositories <span>↗</span></a>`;
-}
-function renderProject(id) {
-  const p = projects[id];
-  panelTitle.textContent = p.title;
-  const art =
-    id === "cyberpunk"
-      ? "./assets/cyberpunk.webp"
-      : id === "zehn"
-        ? "./assets/quest-worlds.webp"
-        : null;
-  panelContent.innerHTML = `<button class="text-back" data-back>← BACK TO THE SHELF</button>${art ? `<img class="project-art ${id}" src="${art}" alt="${p.title} project artwork" />` : ""}<p class="panel-intro">${p.description}</p><div class="tag-list">${p.tags.map((t) => `<span>${t}</span>`).join("")}</div><a class="panel-link" href="${p.source}" target="_blank" rel="noopener noreferrer">View source on GitHub <span>↗</span></a>${p.live ? `<a class="panel-link secondary" href="${p.live}" target="_blank" rel="noopener noreferrer">Visit the project <span>↗</span></a>` : ""}`;
-  $(".panel-scroll").scrollTop = 0;
-  panelTitle.focus({ preventScroll: true });
-  announcement.textContent = `${p.title} project details.`;
-}
-const sectionContent = {
-  about: () => {
-    panelTitle.innerHTML = "The human<br />behind the screen.";
-    panelContent.innerHTML = `<p class="panel-intro">Hey, I’m <span class="bio-name">Elshodbek Ermuxammadov</span>, a developer from Uzbekistan. I like the space where technical depth meets creative freedom. One day it’s an algorithm. The next, a shader that changes the whole mood of a world.</p><p class="panel-intro">I build systems, experiment with graphics, and turn “what if?” into things you can actually use. This workshop is a little window into that world.</p><div class="bio-list"><div><span>UNDER THE HOOD</span><p>C++ · Python · TypeScript<br />Algorithms & full-stack development</p></div><div><span>BEYOND THE SURFACE</span><p>GLSL · WebGL · Blender<br />Shaders & real-time rendering</p></div><div><span>AFTER HOURS</span><p>C# · Unity · Linux<br />Game mechanics & open-source tools</p></div></div><a class="panel-link" href="https://github.com/orgs/FstudentsTTT/repositories" target="_blank" rel="noopener noreferrer">Also building with FstudentsTTT <span>↗</span></a>`;
-  },
-  honors: () => {
-    panelTitle.innerHTML = "A competitive<br />streak.";
-    panelContent.innerHTML = `<p class="panel-intro">Math, logic, and the persistence to keep working when the first idea doesn’t.</p><div class="honor-row"><span class="honor-year">2026</span><div><h3>Purple Comet</h3><p>International Math Competition<br />Uzbekistan</p></div><span class="honor-place">1st<small>PLACE</small></span></div><div class="honor-row"><span class="honor-year">2025</span><div><h3>Regional STEM Olympiad</h3><p>Applied sciences & logical problem solving</p></div><span class="honor-place">3rd<small>PLACE</small></span></div><div class="honor-row"><span class="honor-year">2024</span><div><h3>Computer Science Olympiad</h3><p>Regional · Informatics & algorithms</p></div><span class="honor-place">3rd<small>PLACE</small></span></div>`;
-  },
-  contact: () => {
-    panelTitle.innerHTML = "Good things start<br />with a hello.";
-    panelContent.innerHTML = `<p class="contact-heading">A project, a collaboration,<br />or a wonderfully weird idea.</p><p class="panel-intro">The lab is open. Drop me a message and let’s see where the conversation goes.</p><a class="panel-link" href="https://t.me/elshod_gosling" target="_blank" rel="noopener noreferrer">Telegram / @elshod_gosling <span>↗</span></a><a class="panel-link secondary" href="https://github.com/elshod-gosling" target="_blank" rel="noopener noreferrer">GitHub / elshod-gosling <span>↗</span></a><a class="panel-link secondary" href="https://instagram.com/elshod.for.real" target="_blank" rel="noopener noreferrer">Instagram / elshod.for.real <span>↗</span></a><a class="panel-link secondary" href="https://www.curseforge.com/members/elshodbek/projects" target="_blank" rel="noopener noreferrer">CurseForge / elshodbek <span>↗</span></a><p class="contact-note">BASED IN UZBEKISTAN · UTC+5<br />ALWAYS CURIOUS ABOUT WHAT’S NEXT.</p>`;
-  },
-};
-function openSection(next, trigger) {
-  if (trigger) opener = trigger;
-  enter();
-  section = next;
-  $("#hotspots").inert = next !== "home";
-  document.querySelectorAll(".dock [data-section]").forEach((button) => {
-    if (button.dataset.section === next)
-      button.setAttribute("aria-current", "page");
-    else button.removeAttribute("aria-current");
-  });
-  if (next === "home") {
-    panel.hidden = true;
-    document.body.classList.remove("has-panel");
-    workshop?.focus("home");
-    return;
+  if (workshop) {
+    workshop.setScrollProgress(progress);
   }
-  $("#panel-eyebrow").textContent = {
-    projects: "01 / THE PROJECT SHELF",
-    about: "02 / MEET THE DEVELOPER",
-    honors: "03 / THE SIDE QUESTS",
-    contact: "04 / THE HOTLINE",
-  }[next];
-  if (next === "projects") renderProjects();
-  else sectionContent[next]();
-  panel.hidden = false;
-  document.body.classList.add("has-panel");
-  $(".panel-scroll").scrollTop = 0;
-  panelTitle.tabIndex = -1;
-  panelTitle.focus({ preventScroll: true });
-  workshop?.focus(next);
-  announcement.textContent = `${panelTitle.innerText} panel opened.`;
+
+  // Update Progress HUD
+  if (progressFill) {
+    progressFill.style.height = `${progress * 100}%`;
+  }
+
+  // Active Station calculation (0 to 4)
+  const newStation = Math.min(4, Math.max(0, Math.round(progress * 4)));
+  if (newStation !== currentStation) {
+    currentStation = newStation;
+    if (stationIndicator) {
+      stationIndicator.textContent = `0${currentStation + 1} / 05`;
+    }
+    updateDock(currentStation);
+  }
 }
-document
-  .querySelectorAll("[data-section]")
-  .forEach((button) =>
-    button.addEventListener("click", () =>
-      openSection(button.dataset.section, button),
-    ),
-  );
-panelContent.addEventListener("click", (event) => {
-  const target = event.target.closest("[data-project],[data-back]");
-  if (!target) return;
-  if (target.hasAttribute("data-back")) {
-    renderProjects();
-    panelTitle.focus({ preventScroll: true });
-  } else renderProject(target.dataset.project);
-});
-function closePanel() {
-  openSection("home");
-  opener?.focus({ preventScroll: true });
+
+function updateDock(stationIdx) {
+  document.querySelectorAll(".dock button[data-station]").forEach((btn) => {
+    const idx = parseInt(btn.dataset.station, 10);
+    if (idx === stationIdx) {
+      btn.classList.add("active");
+      btn.setAttribute("aria-current", "page");
+    } else {
+      btn.classList.remove("active");
+      btn.removeAttribute("aria-current");
+    }
+  });
 }
-$("#panel-close").addEventListener("click", closePanel);
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !panel.hidden) closePanel();
+
+function scrollToStation(stationIdx) {
+  const target = document.querySelector(`.story-section[data-station="${stationIdx}"]`);
+  if (target) {
+    target.scrollIntoView({ behavior: "smooth" });
+  }
+}
+
+// Navigation click triggers
+document.addEventListener("click", (e) => {
+  const stationBtn = e.target.closest("[data-station]");
+  if (stationBtn) {
+    const stationIdx = parseInt(stationBtn.dataset.station, 10);
+    if (!isNaN(stationIdx)) {
+      scrollToStation(stationIdx);
+    }
+  }
 });
-$("#reset-view").addEventListener("click", () => {
-  openSection("home");
-  workshop?.reset();
-});
+
+// Free Orbit Toggle Mode
+const orbitBtn = $("#orbit-toggle");
+if (orbitBtn) {
+  orbitBtn.addEventListener("click", () => {
+    if (!workshop) return;
+    isFreeOrbit = workshop.toggleOrbit();
+    orbitBtn.setAttribute("aria-pressed", String(isFreeOrbit));
+    orbitBtn.classList.toggle("active", isFreeOrbit);
+    orbitBtn.title = isFreeOrbit ? "Exit Free 3D Orbit (Return to Rail)" : "Toggle Free 3D Orbit";
+  });
+}
+
+// Reset view
+const resetBtn = $("#reset-view");
+if (resetBtn) {
+  resetBtn.addEventListener("click", () => {
+    scrollToStation(0);
+    workshop?.reset();
+    if (isFreeOrbit) {
+      isFreeOrbit = false;
+      orbitBtn?.setAttribute("aria-pressed", "false");
+      orbitBtn?.classList.remove("active");
+    }
+  });
+}
+
+if (scrollContainer) {
+  scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
+}
+
+// Tashkent Time & Year
 const clockFormat = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Asia/Tashkent",
   hour: "2-digit",
@@ -162,42 +111,55 @@ const clockFormat = new Intl.DateTimeFormat("en-GB", {
 });
 function clock() {
   const now = new Date();
-  $("#local-time").textContent = clockFormat.format(now);
-  $("#local-time").dateTime = now.toISOString();
-  $("#year").textContent = new Intl.DateTimeFormat("en", {
-    timeZone: "Asia/Tashkent",
-    year: "numeric",
-  }).format(now);
+  const timeEl = $("#local-time");
+  if (timeEl) {
+    timeEl.textContent = clockFormat.format(now);
+    timeEl.dateTime = now.toISOString();
+  }
+  const yearEl = $("#year");
+  if (yearEl) {
+    yearEl.textContent = new Intl.DateTimeFormat("en", {
+      timeZone: "Asia/Tashkent",
+      year: "numeric",
+    }).format(now);
+  }
 }
 clock();
 setInterval(clock, 30000);
+
+// Motion preferences
 function applyMotion() {
   document.body.classList.toggle("motion-paused", !motionOn);
-  $("#motion-toggle").setAttribute("aria-pressed", String(!motionOn));
-  $("#motion-toggle").setAttribute(
-    "aria-label",
-    motionOn ? "Pause animation" : "Resume animation",
-  );
-  $("#motion-icon").textContent = motionOn ? "Ⅱ" : "▷";
+  const mToggle = $("#motion-toggle");
+  if (mToggle) {
+    mToggle.setAttribute("aria-pressed", String(!motionOn));
+    mToggle.setAttribute(
+      "aria-label",
+      motionOn ? "Pause animation" : "Resume animation",
+    );
+  }
+  const mIcon = $("#motion-icon");
+  if (mIcon) mIcon.textContent = motionOn ? "Ⅱ" : "▷";
   workshop?.setMotion(motionOn);
 }
 applyMotion();
-$("#motion-toggle").addEventListener("click", () => {
+$("#motion-toggle")?.addEventListener("click", () => {
   motionOn = !motionOn;
   try {
     localStorage.setItem("night-lab-motion", motionOn ? "on" : "off");
   } catch {}
   applyMotion();
 });
-reducedMotion.addEventListener("change", (event) => {
-  motionOn = !event.matches;
+reducedMotion.addEventListener("change", (e) => {
+  motionOn = !e.matches;
   applyMotion();
 });
 
+// Ambient sound generator
 let audioContext,
   audioGain,
   soundOn = false;
-$("#sound-toggle").addEventListener("click", async () => {
+$("#sound-toggle")?.addEventListener("click", async () => {
   try {
     if (!audioContext) {
       audioContext = new AudioContext();
@@ -240,13 +202,15 @@ $("#sound-toggle").addEventListener("click", async () => {
       audioContext.currentTime,
       0.4,
     );
-    $("#sound-toggle").setAttribute("aria-pressed", String(soundOn));
-    $("#sound-toggle").setAttribute(
+    const sToggle = $("#sound-toggle");
+    sToggle?.setAttribute("aria-pressed", String(soundOn));
+    sToggle?.setAttribute(
       "aria-label",
       soundOn ? "Mute ambient sound" : "Enable ambient sound",
     );
   } catch {
-    announcement.textContent = "Ambient sound is unavailable in this browser.";
+    if (announcement)
+      announcement.textContent = "Ambient sound is unavailable in this browser.";
   }
 });
 document.addEventListener("visibilitychange", () => {
@@ -258,28 +222,41 @@ document.addEventListener("visibilitychange", () => {
     );
 });
 
+// Start 3D World
 async function startWorld() {
   try {
     await document.fonts.ready;
     const { createWorkshop } = await import("./workshop.js");
+    const loadStatus = $("#load-status");
     workshop = await createWorkshop($("#world"), {
       motion: motionOn,
-      onSelect: (id) => openSection(id, $(`[data-spot="${id}"]`)),
-      onProgress: (text) => ($("#load-status").textContent = text),
+      onSelect: (sectionName) => {
+        const stationMap = {
+          home: 0,
+          projects: 1,
+          about: 2,
+          honors: 3,
+          contact: 4,
+        };
+        if (typeof stationMap[sectionName] === "number") {
+          scrollToStation(stationMap[sectionName]);
+        }
+      },
+      onProgress: (text) => {
+        if (loadStatus) loadStatus.textContent = text;
+      },
     });
     document.body.classList.add("world-ready");
-    $("#load-status").textContent = "THE LIGHTS ARE ON. COME ON IN.";
-    if (entered) workshop.enter();
-    if (section !== "home") workshop.focus(section);
+    if (loadStatus) loadStatus.textContent = "THE LIGHTS ARE ON. SCROLL TO EXPLORE.";
+    handleScroll();
   } catch (error) {
     console.warn(
-      "3D workshop unavailable; portfolio navigation remains available.",
+      "3D workshop unavailable; standard portfolio views remain active.",
       error,
     );
-    document.body.classList.add("no-webgl", "entered");
-    $("#scene-error").hidden = false;
-    $("#world").removeAttribute("tabindex");
-    $("#scene-hint").hidden = true;
+    document.body.classList.add("no-webgl");
+    const errEl = $("#scene-error");
+    if (errEl) errEl.hidden = false;
   }
 }
 startWorld();
