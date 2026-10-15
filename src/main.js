@@ -8,6 +8,13 @@ const announcement = $("#announcement");
 const interactToast = $("#interact-toast");
 const toastText = $("#toast-text");
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+const stations = [...document.querySelectorAll(".story-section")];
+const dockButtons = [
+  ...document.querySelectorAll(".dock button[data-station]"),
+];
+const qualityModes = ["auto", "eco", "high"];
+let quality = "auto";
+let stationOffsets = [];
 
 let workshop = null;
 let currentStation = 0;
@@ -15,6 +22,8 @@ let isFreeOrbit = false;
 let motionOn = !reducedMotion.matches;
 try {
   if (localStorage.getItem("night-lab-motion") === "off") motionOn = false;
+  const savedQuality = localStorage.getItem("night-lab-quality");
+  if (qualityModes.includes(savedQuality)) quality = savedQuality;
 } catch {}
 
 // Toast Notification Management
@@ -42,6 +51,7 @@ function getAudioContext() {
 }
 
 function playSfx(type) {
+  if (!soundOn) return;
   try {
     const ctx = getAudioContext();
     const now = ctx.currentTime;
@@ -145,8 +155,18 @@ function playSfx(type) {
 // Update scroll progress & camera POV along the Catmull-Rom spline
 function handleScroll() {
   if (!scrollContainer) return;
-  const maxScroll = scrollContainer.scrollHeight - scrollContainer.clientHeight;
-  const progress = maxScroll > 0 ? scrollContainer.scrollTop / maxScroll : 0;
+  const top = scrollContainer.scrollTop;
+  let segment = 0;
+  while (
+    segment < stationOffsets.length - 1 &&
+    top >= stationOffsets[segment + 1]
+  )
+    segment++;
+  const start = stationOffsets[segment] || 0;
+  const end = stationOffsets[segment + 1] ?? start;
+  const fraction =
+    end > start ? Math.min(1, Math.max(0, (top - start) / (end - start))) : 0;
+  const progress = (segment + fraction) / (stations.length - 1);
 
   if (workshop) {
     workshop.setScrollProgress(progress);
@@ -154,11 +174,11 @@ function handleScroll() {
 
   // Update Progress HUD
   if (progressFill) {
-    progressFill.style.height = `${progress * 100}%`;
+    progressFill.style.transform = `scaleY(${progress})`;
   }
 
   // Active Station calculation (0 to 4)
-  const newStation = Math.min(4, Math.max(0, Math.round(progress * 4)));
+  const newStation = segment;
   if (newStation !== currentStation) {
     currentStation = newStation;
     if (stationIndicator) {
@@ -169,7 +189,8 @@ function handleScroll() {
 }
 
 function updateDock(stationIdx) {
-  document.querySelectorAll(".dock button[data-station]").forEach((btn) => {
+  document.body.dataset.station = String(stationIdx);
+  dockButtons.forEach((btn) => {
     const idx = parseInt(btn.dataset.station, 10);
     if (idx === stationIdx) {
       btn.classList.add("active");
@@ -182,15 +203,39 @@ function updateDock(stationIdx) {
 }
 
 function scrollToStation(stationIdx) {
-  const target = document.querySelector(`.story-section[data-station="${stationIdx}"]`);
+  if (isFreeOrbit) setOrbit(false);
+  const target = stations[stationIdx];
   if (target) {
-    target.scrollIntoView({ behavior: "smooth" });
+    scrollContainer.scrollTo({
+      top: target.offsetTop,
+      behavior: motionOn ? "smooth" : "instant",
+    });
   }
 }
 
+function measureStations() {
+  const maxScroll = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+  stationOffsets = stations.map((station) =>
+    Math.min(station.offsetTop, maxScroll),
+  );
+  handleScroll();
+}
+let scrollFrame = 0;
+function scheduleScroll() {
+  if (scrollFrame) return;
+  scrollFrame = requestAnimationFrame(() => {
+    scrollFrame = 0;
+    handleScroll();
+  });
+}
+const stationObserver = new ResizeObserver(measureStations);
+stationObserver.observe(scrollContainer);
+stations.forEach((station) => stationObserver.observe(station));
+updateDock(0);
+
 // Navigation click triggers
 document.addEventListener("click", (e) => {
-  const stationBtn = e.target.closest("[data-station]");
+  const stationBtn = e.target.closest("button[data-station]");
   if (stationBtn) {
     const stationIdx = parseInt(stationBtn.dataset.station, 10);
     if (!isNaN(stationIdx)) {
@@ -201,16 +246,70 @@ document.addEventListener("click", (e) => {
 
 // Free Orbit Toggle Mode
 const orbitBtn = $("#orbit-toggle");
+function setOrbit(enabled) {
+  if (!workshop) return;
+  isFreeOrbit = workshop.toggleOrbit(enabled);
+  document.body.classList.toggle("free-orbit", isFreeOrbit);
+  orbitBtn.setAttribute("aria-pressed", String(isFreeOrbit));
+  orbitBtn.classList.toggle("active", isFreeOrbit);
+  orbitBtn.title = isFreeOrbit ? "Exit free orbit" : "Explore in free orbit";
+  orbitBtn.setAttribute("aria-label", orbitBtn.title);
+  $("#exit-orbit").hidden = !isFreeOrbit;
+  if (isFreeOrbit) $("#world").focus({ preventScroll: true });
+}
 if (orbitBtn) {
   orbitBtn.addEventListener("click", () => {
     if (!workshop) return;
-    isFreeOrbit = workshop.toggleOrbit();
-    orbitBtn.setAttribute("aria-pressed", String(isFreeOrbit));
-    orbitBtn.classList.toggle("active", isFreeOrbit);
-    orbitBtn.title = isFreeOrbit ? "Exit Free 3D Orbit (Return to Rail)" : "Toggle Free 3D Orbit";
-    showToast(isFreeOrbit ? "⟲ Free 3D Orbit Mode: Drag & rotate diorama" : "▶ Rail Mode: Scroll-driven camera active", 2500);
+    setOrbit(!isFreeOrbit);
+    showToast(
+      isFreeOrbit
+        ? "⟲ Free 3D Orbit Mode: Drag & rotate diorama"
+        : "▶ Rail Mode: Scroll-driven camera active",
+      2500,
+    );
   });
 }
+$("#exit-orbit").addEventListener("click", () => {
+  setOrbit(false);
+  orbitBtn.focus();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && isFreeOrbit) {
+    setOrbit(false);
+    orbitBtn.focus();
+  }
+});
+$("#robot-label").addEventListener("click", () => workshop?.interact("robot"));
+
+const qualityBtn = $("#quality-toggle");
+function updateQuality() {
+  const next =
+    qualityModes[(qualityModes.indexOf(quality) + 1) % qualityModes.length];
+  qualityBtn.firstElementChild.textContent = quality.toUpperCase();
+  qualityBtn.setAttribute(
+    "aria-label",
+    `Graphics quality: ${quality}. Switch to ${next}`,
+  );
+  qualityBtn.title = `Graphics quality: ${quality}. Switch to ${next}`;
+  workshop?.setQuality(quality);
+}
+qualityBtn.addEventListener("click", () => {
+  quality =
+    qualityModes[(qualityModes.indexOf(quality) + 1) % qualityModes.length];
+  try {
+    localStorage.setItem("night-lab-quality", quality);
+  } catch {}
+  updateQuality();
+  showToast(
+    quality === "eco"
+      ? "Eco graphics · lighter on your battery"
+      : quality === "high"
+        ? "High graphics · full bloom and reflections"
+        : "Auto graphics · adapts to your device",
+    2500,
+  );
+});
+updateQuality();
 
 // Reset view
 const resetBtn = $("#reset-view");
@@ -219,15 +318,13 @@ if (resetBtn) {
     scrollToStation(0);
     workshop?.reset();
     if (isFreeOrbit) {
-      isFreeOrbit = false;
-      orbitBtn?.setAttribute("aria-pressed", "false");
-      orbitBtn?.classList.remove("active");
+      setOrbit(false);
     }
   });
 }
 
 if (scrollContainer) {
-  scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
+  scrollContainer.addEventListener("scroll", scheduleScroll, { passive: true });
 }
 
 // Tashkent Time & Year
@@ -284,7 +381,9 @@ reducedMotion.addEventListener("change", (e) => {
 });
 
 // Ambient sound generator
-let bgAudioContext, bgGain, soundOn = false;
+let bgAudioContext,
+  bgGain,
+  soundOn = false;
 $("#sound-toggle")?.addEventListener("click", async () => {
   try {
     if (!bgAudioContext) {
@@ -334,10 +433,14 @@ $("#sound-toggle")?.addEventListener("click", async () => {
       "aria-label",
       soundOn ? "Mute ambient sound" : "Enable ambient sound",
     );
-    showToast(soundOn ? "🔊 Night Lab ambient sound enabled" : "🔇 Ambient sound muted", 2000);
+    showToast(
+      soundOn ? "🔊 Night Lab ambient sound enabled" : "🔇 Ambient sound muted",
+      2000,
+    );
   } catch {
     if (announcement)
-      announcement.textContent = "Ambient sound is unavailable in this browser.";
+      announcement.textContent =
+        "Ambient sound is unavailable in this browser.";
   }
 });
 document.addEventListener("visibilitychange", () => {
@@ -352,12 +455,21 @@ document.addEventListener("visibilitychange", () => {
 // Start 3D World with 3D Object Interactivity
 async function startWorld() {
   try {
-    await document.fonts.ready;
-    const { createWorkshop } = await import("./workshop.js");
+    const [module] = await Promise.all([
+      import("./workshop.js"),
+      document.fonts.load('600 24px "Inter Tight"').catch(() => []),
+    ]);
     const loadStatus = $("#load-status");
 
-    workshop = await createWorkshop($("#world"), {
+    workshop = await module.createWorkshop($("#world"), {
       motion: motionOn,
+      quality,
+      interactionHost: scrollContainer,
+      robotLabel: $("#robot-label"),
+      onContextChange: (available) => {
+        orbitBtn.disabled = !available;
+        if (!available && isFreeOrbit) setOrbit(false);
+      },
       onSelect: (sectionName) => {
         const stationMap = {
           home: 0,
@@ -377,30 +489,32 @@ async function startWorld() {
         } else if (type === "choynak") {
           showToast("🍵 Fresh hot tea brewed on the workbench.");
         } else if (type === "monitor") {
-          showToast("🖥️ Display switched: Cyber Horizon ⇄ Audio Wave ⇄ Digital Ikat");
+          showToast(
+            "🖥️ Display switched: Cyber Horizon ⇄ Audio Wave ⇄ Digital Ikat",
+          );
         } else if (type === "trophy") {
-          showToast("🏆 Star Trophy: Purple Comet 1st Place & Olympiad Honors!");
+          showToast(
+            "🏆 Star Trophy: Purple Comet 1st Place & Olympiad Honors!",
+          );
         } else if (type === "phone") {
-          showToast("📞 Opening Telegram @elshod_gosling...");
-          setTimeout(() => {
-            window.open("https://t.me/elshod_gosling", "_blank");
-          }, 600);
+          showToast("📞 The hotline is open. Pick a channel below.");
+          scrollToStation(4);
         } else if (type === "cartridge") {
           showToast("📼 Project cartridge selected: Viewing projects");
           scrollToStation(1);
         }
-      },
-      onHover: (type) => {
-        // Can optionally provide subtle hints
       },
       onProgress: (text) => {
         if (loadStatus) loadStatus.textContent = text;
       },
     });
 
+    workshop.setMotion(motionOn);
+    workshop.setQuality(quality);
     document.body.classList.add("world-ready");
+    orbitBtn.disabled = false;
     if (loadStatus) loadStatus.textContent = "NEON ONLINE · SCROLL TO EXPLORE.";
-    handleScroll();
+    measureStations();
   } catch (error) {
     console.warn(
       "3D workshop unavailable; standard portfolio views remain active.",
@@ -409,6 +523,8 @@ async function startWorld() {
     document.body.classList.add("no-webgl");
     const errEl = $("#scene-error");
     if (errEl) errEl.hidden = false;
+    $("#load-status").textContent =
+      "EXPLORE THE LAB USING THE NAVIGATION BELOW.";
   }
 }
 startWorld();

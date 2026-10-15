@@ -8,16 +8,28 @@ An interactive, neon-lit Three.js portfolio for **Elshodbek Ermuxammadov**. A sm
 
 ## Explore
 
-Drag to orbit the workshop, scroll or pinch to zoom, and click the glowing objects:
+Scroll to travel between five stations, use the labeled dock to jump to a section, and click the glowing objects. Enable free orbit with the top-right orbit button to drag, pinch, or scroll around the scene.
 
 - **Project vending machine:** Cyberpunk Shader, FinFlow AI, ZEHN-EDU, and elab, with artwork and links to their real repositories.
 - **Workbench:** meet Elshodbek and explore the languages, tools, and creative interests behind the work.
 - **Rooftop trophy:** math, STEM, and computer-science competition results.
 - **Payphone:** Telegram, GitHub, Instagram, and CurseForge.
 
-The navigation dock provides the same content without requiring interaction with 3D objects. Arrow keys rotate the focused scene; `+` and `-` zoom. Escape closes a content panel and restores focus to the control that opened it.
+The navigation dock provides the same content without requiring interaction with 3D objects. In free orbit, arrow keys rotate the focused scene, `+` and `-` zoom, and Escape returns to the portfolio and restores focus to the orbit button. EL-01 is 1.7× larger, with a brighter shell and a keyboard-accessible greeting button.
 
-Sound is off by default. The sound button enables locally synthesized rain ambience and a quiet electrical hum. The motion button pauses the rain, fan, robot, and trophy animations; the preference persists. Reduced-motion preferences are respected, and rendering stops when the tab is hidden. The portfolio navigation remains usable if WebGL is unavailable.
+Sound, including interaction effects, is off by default. The sound button enables locally synthesized rain ambience and a quiet electrical hum. The motion button pauses animation and stops the render loop until interaction requires another frame. Motion and graphics preferences persist. Reduced-motion and reduced-transparency preferences are respected, and rendering stops when the tab is hidden or the WebGL context is lost. The portfolio navigation remains usable if WebGL is unavailable.
+
+## Performance and readability
+
+- Static geometry is batched by material within each scene group: 478 meshes become 167 while retaining interactive objects and station metadata.
+- Repeated geometries and glowing materials are shared. Ambient particles animate in a GPU shader instead of uploading positions every frame.
+- **Auto** uses a lighter rendering path on phones and constrained devices and reduces resolution after sustained slow frames. **Eco** renders at up to 30 fps without postprocessing; **High** allows up to 60 fps with bloom. Pixel counts are capped on large or high-density screens.
+- Bloom is loaded separately only when needed and rendered at reduced resolution. Pavement reflections refresh immediately during camera movement and less often for ambient animation.
+- Text remains available before 3D startup. The scene module and required font load concurrently, and shaders compile asynchronously.
+- Glass blur is limited to outer surfaces, with solid fallbacks. Body text is 16–17 px, project titles are 25–26 px, and mobile dock labels remain visible. Project cards use the main scroll area instead of a nested scroll trap.
+- Camera stations follow measured section offsets, so larger text, long project lists, and viewport changes do not misalign navigation.
+
+In development, `#world` exposes `data-meshes-before`, `data-meshes-after`, `data-rendered-frames`, and `data-draw-calls` for inspection. Frame diagnostics are omitted from production builds.
 
 ## Run locally
 
@@ -38,6 +50,7 @@ Production output is generated in `dist/`. Relative asset paths support GitHub P
 ## Source
 
 - `src/workshop.js`: original procedural 3D models, lighting, live pavement reflections, bloom, rain shaders, raycasting, projected hotspots, and camera controls.
+- `src/effects.js`: optional bloom and output pipeline, loaded only for higher graphics quality.
 - `src/main.js`: navigation, content panels, keyboard behavior, preferences, clock, and synthesized ambience.
 - `src/projects.js`: project descriptions and verified destinations.
 - `src/style.css`: the interface and responsive layouts.

@@ -2,16 +2,13 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { Reflector } from "three/addons/objects/Reflector.js";
-import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
-import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 // Central Asian & Silk Road Cyberpunk Color Palette
-const TURQUOISE = 0x00e5d0,  // Samarkand Turquoise / Firuza
-  COBALT = 0x143f7a,     // Registan Deep Blue
-  GOLD = 0xffc444,       // Silk Road Saffron Gold
-  RUBY = 0xe6286b,       // Pomegranate Ruby / Anor
+const TURQUOISE = 0x00e5d0, // Samarkand Turquoise / Firuza
+  COBALT = 0x143f7a, // Registan Deep Blue
+  GOLD = 0xffc444, // Silk Road Saffron Gold
+  RUBY = 0xe6286b, // Pomegranate Ruby / Anor
   CYAN = 0x55ffed;
 
 const v3 = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -26,14 +23,26 @@ const random = (() => {
 export async function createWorkshop(host, options) {
   options.onProgress("Initializing Night Lab…");
   const mobile = () => host.clientWidth < 768;
+  const constrainedDevice =
+    (navigator.hardwareConcurrency || 8) <= 4 ||
+    (navigator.deviceMemory || 8) <= 4 ||
+    navigator.connection?.saveData;
+  let qualityMode = options.quality || "auto";
+  let adaptiveScale = 1;
+  const eco = () =>
+    qualityMode === "eco" ||
+    (qualityMode === "auto" && (mobile() || constrainedDevice));
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
-    powerPreference: "high-performance",
+    powerPreference: eco() ? "low-power" : "high-performance",
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile() ? 1.25 : 1.5));
+  renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio || 1, eco() ? 1 : 1.5),
+  );
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.15;
   renderer.setClearColor(0x060a16);
+  if (import.meta.env.DEV) renderer.info.autoReset = false;
   host.append(renderer.domElement);
   renderer.domElement.setAttribute("aria-hidden", "true");
 
@@ -60,21 +69,19 @@ export async function createWorkshop(host, options) {
   controls.target.set(0, 2.2, 0);
   camera.position.set(9.0, 5.2, 11.5);
 
-  const composer = new EffectComposer(renderer);
-  composer.renderTarget1.samples = mobile() ? 0 : 2;
-  composer.renderTarget2.samples = mobile() ? 0 : 2;
-  composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(
-    new THREE.Vector2(400, 300),
-    0.38,
-    0.45,
-    0.92,
-  );
-  composer.addPass(bloom);
-  composer.addPass(new OutputPass());
+  // Mobile/Eco renders directly, avoiding all postprocessing framebuffers.
+  // The optional bloom pipeline is downloaded only when it is needed.
+  let effects = null,
+    effectsPromise = null;
 
   const unitBox = new THREE.BoxGeometry(1, 1, 1),
-    materials = new Map();
+    materials = new Map(),
+    glowMaterials = new Map(),
+    geometries = new Map();
+  function cachedGeometry(key, create) {
+    if (!geometries.has(key)) geometries.set(key, create());
+    return geometries.get(key);
+  }
   function mat(color, metalness = 0.15, roughness = 0.65) {
     const k = `${color}/${metalness}/${roughness}`;
     if (!materials.has(k))
@@ -84,22 +91,28 @@ export async function createWorkshop(host, options) {
       );
     return materials.get(k);
   }
-  const glow = (color) =>
-    new THREE.MeshBasicMaterial({
-      color: new THREE.Color(color).multiplyScalar(1.6),
-      toneMapped: false,
-    });
+  function glow(color) {
+    if (!glowMaterials.has(color))
+      glowMaterials.set(
+        color,
+        new THREE.MeshBasicMaterial({
+          color: new THREE.Color(color).multiplyScalar(1.6),
+          toneMapped: false,
+        }),
+      );
+    return glowMaterials.get(color);
+  }
   const cyanGlow = glow(TURQUOISE),
     rubyGlow = glow(RUBY),
     goldGlow = glow(GOLD);
 
-  // Ultra-Performant Liquid Glass Material (Glossy clearcoat, high reflectivity, zero scene-pass cost)
+  // A single shared clearcoat material; no extra transmission render pass.
   const liquidGlassMat = new THREE.MeshPhysicalMaterial({
     roughness: 0.06,
     metalness: 0.08,
     transmission: 0.0,
     transparent: true,
-    opacity: 0.36,
+    opacity: 0.2,
     color: new THREE.Color(0xa5f4ff),
     clearcoat: 1.0,
     clearcoatRoughness: 0.06,
@@ -126,7 +139,10 @@ export async function createWorkshop(host, options) {
   }
   function rounded(w, h, d, x, y, z, color, r = 0.06, parent = root) {
     const o = new THREE.Mesh(
-      new RoundedBoxGeometry(w, h, d, 2, r),
+      cachedGeometry(
+        `rounded/${w}/${h}/${d}/${r}`,
+        () => new RoundedBoxGeometry(w, h, d, 1, r),
+      ),
       color instanceof THREE.Material
         ? color
         : typeof color === "number"
@@ -148,7 +164,10 @@ export async function createWorkshop(host, options) {
     radiusTop = radius,
   ) {
     const o = new THREE.Mesh(
-      new THREE.CylinderGeometry(radiusTop, radius, height, 20),
+      cachedGeometry(
+        `cylinder/${radiusTop}/${radius}/${height}`,
+        () => new THREE.CylinderGeometry(radiusTop, radius, height, 12),
+      ),
       color instanceof THREE.Material
         ? color
         : typeof color === "number"
@@ -161,7 +180,10 @@ export async function createWorkshop(host, options) {
   }
   function sphere(radius, x, y, z, color, parent = root) {
     const o = new THREE.Mesh(
-      new THREE.SphereGeometry(radius, 20, 12),
+      cachedGeometry(
+        `sphere/${radius}`,
+        () => new THREE.SphereGeometry(radius, 16, 10),
+      ),
       color instanceof THREE.Material
         ? color
         : typeof color === "number"
@@ -242,7 +264,7 @@ export async function createWorkshop(host, options) {
     });
     const t = new THREE.CanvasTexture(canvas);
     t.colorSpace = THREE.SRGBColorSpace;
-    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
     return t;
   }
   function label(lines, w, h, x, y, z, settings = {}, parent = root) {
@@ -306,8 +328,8 @@ export async function createWorkshop(host, options) {
       "vec4(mix(vec3(.0021,.00335,.0091),base.rgb*.48,exp(-length(vGround)*.018)),1.0)",
     );
   const floor = new Reflector(new THREE.PlaneGeometry(160, 160), {
-    textureWidth: mobile() ? 256 : 512,
-    textureHeight: mobile() ? 256 : 512,
+    textureWidth: eco() ? 256 : 512,
+    textureHeight: eco() ? 256 : 512,
     clipBias: 0.003,
     shader: floorShader,
     multisample: 0,
@@ -536,13 +558,14 @@ export async function createWorkshop(host, options) {
       0.05,
       monGroup,
     );
-    const screenMat = matOrTex instanceof THREE.Material
-      ? matOrTex
-      : new THREE.MeshBasicMaterial({
-          map: matOrTex,
-          color: matOrTex ? 0xffffff : 0x2c8394,
-          toneMapped: false,
-        });
+    const screenMat =
+      matOrTex instanceof THREE.Material
+        ? matOrTex
+        : new THREE.MeshBasicMaterial({
+            map: matOrTex,
+            color: matOrTex ? 0xffffff : 0x2c8394,
+            toneMapped: false,
+          });
     const screen = new THREE.Mesh(
       new THREE.PlaneGeometry(width, height),
       screenMat,
@@ -572,7 +595,15 @@ export async function createWorkshop(host, options) {
     );
     return screen;
   }
-  const mainScreen = monitor(-0.85, 2.26, 0.62, 1.55, 0.87, cyberScreenShader, true);
+  const mainScreen = monitor(
+    -0.85,
+    2.26,
+    0.62,
+    1.55,
+    0.87,
+    cyberScreenShader,
+    true,
+  );
 
   const codeTexture = textTexture(
     [
@@ -691,7 +722,10 @@ export async function createWorkshop(host, options) {
     steamPositions[i * 3 + 2] = 1.25 + (random() - 0.5) * 0.15;
     steamLifes[i] = random();
   }
-  steamGeo.setAttribute("position", new THREE.BufferAttribute(steamPositions, 3));
+  steamGeo.setAttribute(
+    "position",
+    new THREE.BufferAttribute(steamPositions, 3),
+  );
   const steamMat = new THREE.PointsMaterial({
     size: 0.055,
     color: 0x9be8ff,
@@ -735,26 +769,8 @@ export async function createWorkshop(host, options) {
   const atlasColors = [0x00d2be, 0x143f7a, 0xb81b4d, 0xffc444];
   for (let i = 0; i < 12; i++) {
     const col = atlasColors[i % 4];
-    box(
-      0.47,
-      0.075,
-      1.33,
-      -2.585 + i * 0.47,
-      0,
-      0,
-      col,
-      awning,
-    );
-    box(
-      0.47,
-      0.22,
-      0.06,
-      -2.585 + i * 0.47,
-      -0.12,
-      0.65,
-      col,
-      awning,
-    );
+    box(0.47, 0.075, 1.33, -2.585 + i * 0.47, 0, 0, col, awning);
+    box(0.47, 0.22, 0.06, -2.585 + i * 0.47, -0.12, 0.65, col, awning);
   }
   bar([-2.84, -0.03, 0.68], [2.84, -0.03, 0.68], 0.025, goldGlow, awning);
   for (const x of [-2.6, 2.6])
@@ -1063,8 +1079,15 @@ export async function createWorkshop(host, options) {
 
     for (let i = 0; i < 8; i++) {
       const a = (i * Math.PI) / 4;
-      const rx = Math.cos(a) * 0.23, rz = Math.sin(a) * 0.23;
-      bar([x + rx, y + 0.34, z + rz], [x + rx, y - 0.11, z + rz], 0.012, 0xb88835, root);
+      const rx = Math.cos(a) * 0.23,
+        rz = Math.sin(a) * 0.23;
+      bar(
+        [x + rx, y + 0.34, z + rz],
+        [x + rx, y - 0.11, z + rz],
+        0.012,
+        0xb88835,
+        root,
+      );
     }
     cylinder(0.22, 0.06, x, y - 0.13, z, 0xb88835, root, 0.14);
     sphere(0.045, x, y - 0.18, z, glow(GOLD), root);
@@ -1087,13 +1110,17 @@ export async function createWorkshop(host, options) {
 
   // Robot Caretaker (EL-01) with Uzbek Stylized Do'ppi Cap
   const robot = new THREE.Group();
-  robot.position.set(3.75, 0.24, 2.57);
+  robot.position.set(3.3, 0.24, 2.72);
+  robot.scale.setScalar(1.7);
   robot.rotation.y = -0.25;
   robot.userData.interactive = "robot";
   root.add(robot);
 
-  rounded(0.55, 0.48, 0.38, 0, 0.4, 0, 0x687890, 0.07, robot);
-  rounded(0.66, 0.43, 0.42, 0, 0.92, 0.02, 0x8c96aa, 0.08, robot);
+  const robotShell = mat(0xa5c6d4, 0.3, 0.35);
+  robotShell.emissive.setHex(0x173c4b);
+  robotShell.emissiveIntensity = 0.35;
+  rounded(0.55, 0.48, 0.38, 0, 0.4, 0, robotShell, 0.07, robot);
+  rounded(0.66, 0.43, 0.42, 0, 0.92, 0.02, robotShell, 0.08, robot);
   rounded(0.5, 0.25, 0.035, 0, 0.94, 0.244, 0x0f182c, 0.055, robot);
 
   // Stylized Central Asian square embroidered Do'ppi cap on EL-01
@@ -1103,11 +1130,18 @@ export async function createWorkshop(host, options) {
   box(0.105, 0.07, 0.012, -0.13, 0.96, 0.269, cyanGlow, robot);
   box(0.105, 0.07, 0.012, 0.13, 0.96, 0.269, cyanGlow, robot);
   bar([0, 1.14, 0.02], [0, 1.36, 0.02], 0.016, 0x7c7f96, robot);
-  const robotAntenna = sphere(0.05, 0, 1.37, 0.02, rubyGlow, robot);
+  const antennaMaterial = rubyGlow.clone();
+  const robotAntenna = sphere(0.05, 0, 1.37, 0.02, antennaMaterial, robot);
   for (const x of [-0.19, 0.19])
     rounded(0.22, 0.12, 0.3, x, 0.1, 0.08, 0x43566f, 0.035, robot);
 
-  const robotLeftArm = bar([-0.31, 0.58, 0], [-0.43, 0.3, 0.1], 0.05, 0x56647c, robot);
+  const robotLeftArm = bar(
+    [-0.31, 0.58, 0],
+    [-0.43, 0.3, 0.1],
+    0.05,
+    0x56647c,
+    robot,
+  );
   const robotRightArmGroup = new THREE.Group();
   robotRightArmGroup.position.set(0.31, 0.57, 0);
   robot.add(robotRightArmGroup);
@@ -1178,7 +1212,7 @@ export async function createWorkshop(host, options) {
   );
 
   // Lighting with Samarkand turquoise, cobalt, and saffron ambient fills
-  scene.add(new THREE.HemisphereLight(0x7da4e8, 0x221a34, 1.15));
+  scene.add(new THREE.HemisphereLight(0x9bbce8, 0x30243d, 1.55));
   const moon = new THREE.DirectionalLight(0x7896db, 1.25);
   moon.position.set(-5, 12, 7);
   scene.add(moon);
@@ -1232,7 +1266,6 @@ export async function createWorkshop(host, options) {
   const particleGeo = new THREE.BufferGeometry();
   const pPositions = new Float32Array(particleCount * 3);
   const pColors = new Float32Array(particleCount * 3);
-  const pBaseY = new Float32Array(particleCount);
   const pSpeeds = new Float32Array(particleCount);
 
   const colTurquoise = new THREE.Color(TURQUOISE);
@@ -1243,7 +1276,6 @@ export async function createWorkshop(host, options) {
     pPositions[i * 3 + 0] = (random() - 0.5) * 12;
     const py = 0.35 + random() * 5.2;
     pPositions[i * 3 + 1] = py;
-    pBaseY[i] = py;
     pPositions[i * 3 + 2] = (random() - 0.5) * 9;
 
     const col = i % 3 === 0 ? colTurquoise : i % 3 === 1 ? colRuby : colGold;
@@ -1254,14 +1286,40 @@ export async function createWorkshop(host, options) {
     pSpeeds[i] = 0.35 + random() * 0.75;
   }
 
-  particleGeo.setAttribute("position", new THREE.BufferAttribute(pPositions, 3));
+  particleGeo.setAttribute(
+    "position",
+    new THREE.BufferAttribute(pPositions, 3),
+  );
   particleGeo.setAttribute("color", new THREE.BufferAttribute(pColors, 3));
 
-  const particleMat = new THREE.PointsMaterial({
-    size: mobile() ? 0.05 : 0.075,
-    vertexColors: true,
+  particleGeo.setAttribute("aSpeed", new THREE.BufferAttribute(pSpeeds, 1));
+  const particleMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uPixelRatio: { value: renderer.getPixelRatio() },
+    },
+    vertexShader: `
+      uniform float uTime;
+      uniform float uPixelRatio;
+      attribute vec3 color;
+      attribute float aSpeed;
+      varying vec3 vColor;
+      void main() {
+        vec3 p = position;
+        p.y += sin(uTime * aSpeed + position.x * 3.0) * 0.22;
+        p.x += cos(uTime * 0.3 * aSpeed + position.z) * 0.12;
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        gl_Position = projectionMatrix * mv;
+        gl_PointSize = clamp(42.0 * uPixelRatio / -mv.z, 1.0, 5.0);
+        vColor = color;
+      }`,
+    fragmentShader: `
+      varying vec3 vColor;
+      void main() {
+        float alpha = 1.0 - smoothstep(0.1, 0.5, length(gl_PointCoord - 0.5));
+        gl_FragColor = vec4(vColor, alpha * 0.7);
+      }`,
     transparent: true,
-    opacity: 0.85,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
@@ -1291,8 +1349,74 @@ export async function createWorkshop(host, options) {
   const holoHonors = createHoloRing(-0.4, 4.45, 0.05, GOLD, 0.55);
   const holoContact = createHoloRing(-3.45, 0.28, 1.9, TURQUOISE, 0.58);
 
+  // Bake static siblings by material while keeping animated and interactive
+  // parts separate. Parent station metadata is retained for raycasting.
+  const movingObjects = new Set([
+    robot,
+    trophy,
+    fanBlades,
+    holoProjects,
+    holoAbout,
+    holoHonors,
+    holoContact,
+  ]);
+  let meshesBefore = 0;
+  if (import.meta.env.DEV)
+    root.traverse((object) => {
+      if (object.isMesh) meshesBefore++;
+    });
+  function batchStaticMeshes(group) {
+    const batches = new Map();
+    for (const child of [...group.children]) {
+      if (movingObjects.has(child)) continue;
+      if (child.isGroup) {
+        batchStaticMeshes(child);
+        continue;
+      }
+      if (
+        !child.isMesh ||
+        child.isInstancedMesh ||
+        child.userData.interactive ||
+        child.material.transparent ||
+        Array.isArray(child.material)
+      )
+        continue;
+      const key = child.material;
+      if (!batches.has(key)) batches.set(key, []);
+      batches.get(key).push(child);
+    }
+    for (const [material, meshes] of batches) {
+      if (meshes.length < 2) continue;
+      const baked = meshes.map((mesh) => {
+        mesh.updateMatrix();
+        const geometry = mesh.geometry.index
+          ? mesh.geometry.toNonIndexed()
+          : mesh.geometry.clone();
+        geometry.applyMatrix4(mesh.matrix);
+        return geometry;
+      });
+      const merged = mergeGeometries(baked);
+      baked.forEach((geometry) => geometry.dispose());
+      if (!merged) continue;
+      merged.computeBoundingSphere();
+      meshes.forEach((mesh) => group.remove(mesh));
+      group.add(new THREE.Mesh(merged, material));
+    }
+  }
+  batchStaticMeshes(root);
+  if (import.meta.env.DEV) {
+    let meshesAfter = 0;
+    root.traverse((object) => {
+      if (object.isMesh) meshesAfter++;
+    });
+    console.info(
+      `Night Lab geometry: ${meshesBefore} → ${meshesAfter} meshes after batching.`,
+    );
+    host.dataset.meshesBefore = meshesBefore;
+    host.dataset.meshesAfter = meshesAfter;
+  }
+
   // Cinematic Camera Splines (POV on Scroll)
-  // Perfectly tuned distances with 11-17 units clearance: ZERO clipping through marquee or walls!
   // 0.00: Home (Wide establishing shot with diorama in full view)
   // 0.25: Projects (Comfortable angle framing the vending machine on the right)
   // 0.50: About (Looking through window into workshop desk, tea set, and robot)
@@ -1300,11 +1424,11 @@ export async function createWorkshop(host, options) {
   // 1.00: Contact (Angled view of payphone booth and street signpost)
   const cameraCurve = new THREE.CatmullRomCurve3(
     [
-      v3(9.0, 5.2, 11.5),  // Station 0: Home (Zoomed in & heroic)
-      v3(6.8, 3.6, 7.2),   // Station 1: Projects (Vending machine & cartridges)
-      v3(2.2, 3.2, 6.8),   // Station 2: About (Workbench, GLSL screen, Tea set, Robot)
-      v3(4.2, 7.6, 7.8),   // Station 3: Honors (Rooftop Star Trophy, clear over marquee)
-      v3(-6.5, 3.4, 7.2),  // Station 4: Contact (Payphone & Signpost)
+      v3(9.0, 5.2, 11.5), // Station 0: Home (Zoomed in & heroic)
+      v3(6.8, 3.6, 7.2), // Station 1: Projects (Vending machine & cartridges)
+      v3(2.2, 3.2, 6.8), // Station 2: About (Workbench, GLSL screen, Tea set, Robot)
+      v3(4.2, 7.6, 7.8), // Station 3: Honors (Rooftop Star Trophy, clear over marquee)
+      v3(-6.5, 3.4, 7.2), // Station 4: Contact (Payphone & Signpost)
     ],
     false,
     "catmullrom",
@@ -1313,11 +1437,11 @@ export async function createWorkshop(host, options) {
 
   const targetCurve = new THREE.CatmullRomCurve3(
     [
-      v3(0, 2.2, 0),        // Station 0: Home
-      v3(3.2, 1.8, 1.0),    // Station 1: Projects
-      v3(-0.4, 2.0, 0.9),   // Station 2: About
+      v3(0, 2.2, 0), // Station 0: Home
+      v3(3.2, 1.8, 1.0), // Station 1: Projects
+      v3(-0.4, 2.0, 0.9), // Station 2: About
       v3(-0.4, 4.85, 0.05), // Station 3: Honors
-      v3(-3.2, 2.0, 1.6),   // Station 4: Contact
+      v3(-3.2, 2.0, 1.6), // Station 4: Contact
     ],
     false,
     "catmullrom",
@@ -1327,312 +1451,458 @@ export async function createWorkshop(host, options) {
   let motion = options.motion,
     raf = 0,
     lastFrame = 0,
+    lastRender = 0,
     time = 0,
-    frameCount = 0,
     dirty = true,
     scrollProgress = 0,
     targetScrollProgress = 0,
-    isFreeOrbit = false;
-
-  // Interactive animation states
-  let robotWave = 0;
-  let choynakSteamTimer = 0;
-  let trophySpinBonus = 0;
+    isFreeOrbit = false,
+    contextLost = false;
+  let robotWave = 0,
+    choynakSteamTimer = 0,
+    trophySpinBonus = 0,
+    antennaTimer;
+  let frameNow = 0,
+    reflectionDirty = true,
+    lastReflectionTime = -Infinity;
+  let hoverDirty = false,
+    hoverEligible = false,
+    lastHoverTime = 0,
+    currentHovered = null;
+  let averageFrame = 1 / 60,
+    sampleFrames = 0,
+    lastQualityChange = 0;
+  let renderedFrames = 0;
+  const pointer = new THREE.Vector2();
+  const cameraPosition = v3(),
+    cameraTarget = v3(),
+    cameraDistance = v3();
+  const markerPosition = v3();
+  const raycaster = new THREE.Raycaster();
+  const interactionHost = options.interactionHost || host;
+  const marker = options.robotLabel;
+  const finePointer = matchMedia("(pointer: fine)");
+  controls.enabled = false;
+  controls.enableDamping = false;
 
   function triggerInteractiveAction(type) {
     if (type === "robot") {
-      robotWave = 1.8;
+      robotWave = motion ? 1.8 : 0;
+      if (!motion) robotRightArmGroup.rotation.z = 0.65;
       robotAntenna.material.color.setHex(GOLD);
-      setTimeout(() => robotAntenna.material.color.setHex(RUBY), 1200);
+      clearTimeout(antennaTimer);
+      antennaTimer = setTimeout(() => {
+        robotAntenna.material.color.copy(rubyGlow.color);
+        if (!motion) robotRightArmGroup.rotation.z = 0;
+        dirty = true;
+        schedule();
+      }, 1800);
     } else if (type === "choynak") {
-      choynakSteamTimer = 2.5;
+      choynakSteamTimer = motion ? 2.5 : 0;
     } else if (type === "monitor") {
       currentShaderMode = (currentShaderMode + 1) % 3;
       cyberScreenShader.uniforms.uMode.value = currentShaderMode;
     } else if (type === "trophy") {
-      trophySpinBonus = 20.0;
+      if (motion) trophySpinBonus = 20;
+      else star.rotation.y += Math.PI / 4;
     }
+    options.onInteract?.(type);
     dirty = true;
     schedule();
   }
 
-  const pointer = new THREE.Vector2(0, 0);
-  window.addEventListener("pointermove", (e) => {
-    pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
-    pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  function isSceneTarget(target) {
+    return (
+      target instanceof Element &&
+      !target.closest(".story-card, button, a, .header, .dock, .scene-error")
+    );
+  }
+  window.addEventListener(
+    "pointermove",
+    (event) => {
+      if (event.pointerType === "touch") return;
+      const rect = host.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      if (pointer.x === x && pointer.y === y) return;
+      pointer.set(x, y);
+      hoverEligible = isSceneTarget(event.target);
+      hoverDirty = true;
+      dirty = true;
+      schedule();
+    },
+    { passive: true },
+  );
+  document.addEventListener("pointerleave", () => {
+    pointer.set(0, 0);
+    hoverEligible = false;
+    hoverDirty = true;
     dirty = true;
     schedule();
-
-    // Hover detection on 3D objects
-    if (!isFreeOrbit) {
-      checkHover(pointer);
-    }
   });
 
-  const raycaster = new THREE.Raycaster();
-  let currentHovered = null;
-
-  function checkHover(pointerCoords) {
-    raycaster.setFromCamera(pointerCoords, camera);
-    const hits = raycaster.intersectObjects(root.children, true);
-    let found = null;
+  function pick(coords) {
+    raycaster.setFromCamera(coords, camera);
+    const hits = raycaster.intersectObject(root, true);
     for (const hit of hits) {
-      let o = hit.object;
-      while (o && !o.userData.interactive && !o.userData.section) o = o.parent;
-      if (o?.userData.interactive) {
-        found = o.userData.interactive;
-        break;
-      }
+      // Glass remains visually in front of the objects without blocking them.
+      if (hit.object.material?.transparent) continue;
+      let object = hit.object;
+      while (object && !object.userData.interactive && !object.userData.section)
+        object = object.parent;
+      if (object) return object.userData;
+      return null;
     }
+    return null;
+  }
+  function checkHover() {
+    const data = hoverEligible && !isFreeOrbit ? pick(pointer) : null;
+    const found = data?.interactive || data?.section || null;
     if (found !== currentHovered) {
       currentHovered = found;
-      renderer.domElement.style.cursor = found ? "pointer" : "default";
-      if (options.onHover) options.onHover(found);
+      interactionHost.style.cursor = found ? "pointer" : "";
+      options.onHover?.(found);
     }
+    hoverDirty = false;
   }
 
-  // Optimized Floor Reflection: throttled updates & hide non-essential particles during reflection pass
-  let lastReflectFrame = 0;
+  // Reflections refresh immediately for camera changes, then at a lower rate
+  // for ambient animation. Paused scenes still receive their first reflection.
   const originalReflect = floor.onBeforeRender;
   floor.onBeforeRender = function (...args) {
-    const step = mobile() ? 3 : 2;
-    if (frameCount - lastReflectFrame >= step) {
-      lastReflectFrame = frameCount;
-      rain.visible = false;
-      dustParticles.visible = false;
-      teaSteam.visible = false;
+    if (!reflectionDirty && frameNow - lastReflectionTime < (eco() ? 160 : 80))
+      return;
+    lastReflectionTime = frameNow;
+    reflectionDirty = false;
+    rain.visible = dustParticles.visible = teaSteam.visible = false;
+    try {
       originalReflect.apply(this, args);
-      rain.visible = true;
-      dustParticles.visible = true;
-      teaSteam.visible = true;
+    } finally {
+      rain.visible = dustParticles.visible = teaSteam.visible = true;
     }
   };
 
+  function updateMarker() {
+    if (!marker) return;
+    robot.localToWorld(markerPosition.set(0, 1.6, 0));
+    markerPosition.project(camera);
+    const x = (markerPosition.x * 0.5 + 0.5) * host.clientWidth;
+    const y = (-markerPosition.y * 0.5 + 0.5) * host.clientHeight;
+    marker.hidden =
+      isFreeOrbit ||
+      scrollProgress > 0.08 ||
+      markerPosition.z > 1 ||
+      x < 40 ||
+      x > host.clientWidth - 40 ||
+      y < 100 ||
+      y > host.clientHeight - 150;
+    if (!marker.hidden) {
+      const safeX = Math.max(100, Math.min(host.clientWidth - 100, x));
+      marker.style.transform = `translate3d(${Math.round(safeX)}px, ${Math.round(y - 14)}px, 0) translate(-50%, -100%)`;
+    }
+  }
+
   function draw(now) {
     raf = 0;
-    if (document.hidden) return;
-    const dt = lastFrame ? Math.min((now - lastFrame) / 1000, 0.05) : 0.016;
-    lastFrame = now;
-
-    // Smooth scroll camera interpolation along the spline
-    if (motion) {
-      scrollProgress += (targetScrollProgress - scrollProgress) * 0.095;
-    } else {
-      scrollProgress = targetScrollProgress;
+    if (document.hidden || contextLost) return;
+    if (
+      lastRender &&
+      now - lastRender < (eco() ? 1000 / 30 : 1000 / 60) - 0.75
+    ) {
+      schedule();
+      return;
     }
-    if (Math.abs(targetScrollProgress - scrollProgress) > 0.0003) {
-      dirty = true;
-    }
+    if (import.meta.env.DEV) renderer.info.reset();
+    const dt = lastFrame ? Math.min((now - lastFrame) / 1000, 0.1) : 1 / 60;
+    lastFrame = lastRender = now;
+    frameNow = now;
+    const previousProgress = scrollProgress;
+    scrollProgress = motion
+      ? scrollProgress +
+        (targetScrollProgress - scrollProgress) * (1 - Math.exp(-7 * dt))
+      : targetScrollProgress;
+    const travelling = Math.abs(targetScrollProgress - scrollProgress) > 0.0001;
+    if (!travelling) scrollProgress = targetScrollProgress;
+    reflectionDirty ||=
+      Math.abs(scrollProgress - previousProgress) > 0.00001 || dirty;
 
+    let controlsChanged = false;
     if (!isFreeOrbit) {
+      // getPoint preserves the five station knots; getPointAt would redistribute
+      // them by distance and aim at the wrong object for a selected station.
       const p = THREE.MathUtils.clamp(scrollProgress, 0, 1);
-      const baseCamPos = cameraCurve.getPointAt(p);
-      const baseTarget = targetCurve.getPointAt(p);
-
-      if (mobile()) {
-        const diff = baseCamPos.clone().sub(baseTarget);
-        diff.multiplyScalar(1.22);
-        diff.y += 0.6;
-        baseCamPos.copy(baseTarget).add(diff);
+      cameraCurve.getPoint(p, cameraPosition);
+      targetCurve.getPoint(p, cameraTarget);
+      if (host.clientWidth < 1000) {
+        cameraDistance
+          .copy(cameraPosition)
+          .sub(cameraTarget)
+          .multiplyScalar(Math.max(1.2, 1 / camera.aspect));
+        cameraPosition.copy(cameraTarget).add(cameraDistance);
       }
-
-      // Smooth mouse parallax
-      const parX = pointer.x * (mobile() ? 0.12 : 0.3);
-      const parY = pointer.y * (mobile() ? 0.08 : 0.2);
-
-      camera.position.set(baseCamPos.x + parX, baseCamPos.y + parY, baseCamPos.z);
-      controls.target.set(baseTarget.x, baseTarget.y, baseTarget.z);
-    }
-
-    controls.update();
+      camera.position.copy(cameraPosition);
+      if (motion && finePointer.matches) {
+        camera.position.x += pointer.x * 0.16;
+        camera.position.y += pointer.y * 0.1;
+      }
+      controls.target.copy(cameraTarget);
+      camera.lookAt(cameraTarget);
+    } else controlsChanged = controls.update(dt);
 
     if (motion) {
       time += dt;
       fanBlades.rotation.z += dt * 2.2;
-
-      // Robot Caretaker Animation & Wave Interaction
       if (robotWave > 0) {
         robotWave -= dt;
-        robotRightArmGroup.rotation.z = Math.sin(time * 12.0) * 0.45 + 0.3;
-        robot.rotation.y = -0.25 + Math.sin(time * 6.0) * 0.25;
+        robotRightArmGroup.rotation.z = Math.sin(time * 12) * 0.45 + 0.5;
+        robot.rotation.y = -0.25 + Math.sin(time * 6) * 0.25;
       } else {
         robotRightArmGroup.rotation.z = 0;
         robot.rotation.y = -0.25 + Math.sin(time * 0.8) * 0.12;
       }
-
-      // 8-Pointed Star Trophy Spin & Bonus Spin on Click
       if (trophySpinBonus > 0) {
-        trophySpinBonus = Math.max(0, trophySpinBonus - dt * 8.0);
-        star.rotation.y += dt * (2.0 + trophySpinBonus);
-      } else {
-        star.rotation.y = Math.sin(time * 0.6) * 0.25;
-      }
-
+        trophySpinBonus = Math.max(0, trophySpinBonus - dt * 8);
+        star.rotation.y += dt * (2 + trophySpinBonus);
+      } else star.rotation.y = Math.sin(time * 0.6) * 0.25;
       rainMaterial.uniforms.uTime.value = time;
       floor.material.uniforms.uTime.value = time;
       cyberScreenShader.uniforms.uTime.value = time;
+      particleMat.uniforms.uTime.value = time;
 
-      // Atmospheric particles bobbing
-      const pArr = dustParticles.geometry.attributes.position.array;
-      for (let i = 0; i < particleCount; i++) {
-        pArr[i * 3 + 1] = pBaseY[i] + Math.sin(time * pSpeeds[i] + i) * 0.22;
-        pArr[i * 3 + 0] += Math.cos(time * 0.3 * pSpeeds[i] + i) * 0.001;
-      }
-      dustParticles.geometry.attributes.position.needsUpdate = true;
-
-      // Tea steam particles rising
-      const sArr = teaSteam.geometry.attributes.position.array;
+      const steamArray = teaSteam.geometry.attributes.position.array;
       const steamSpeed = choynakSteamTimer > 0 ? 1.4 : 0.55;
       if (choynakSteamTimer > 0) choynakSteamTimer -= dt;
-
       for (let i = 0; i < steamCount; i++) {
-        steamLifes[i] += dt * steamSpeed;
-        if (steamLifes[i] > 1.0) steamLifes[i] = 0;
-        sArr[i * 3 + 1] = 1.95 + steamLifes[i] * 0.55;
-        sArr[i * 3 + 0] = 1.85 + Math.sin(time * 2.5 + i) * 0.05;
+        steamLifes[i] = (steamLifes[i] + dt * steamSpeed) % 1;
+        steamArray[i * 3 + 1] = 1.95 + steamLifes[i] * 0.55;
+        steamArray[i * 3] = 1.85 + Math.sin(time * 2.5 + i) * 0.05;
       }
       teaSteam.geometry.attributes.position.needsUpdate = true;
       teaSteam.material.opacity = choynakSteamTimer > 0 ? 0.75 : 0.4;
-
-      // Holographic station ring pulses
-      holoProjects.rotation.z += dt * 0.4;
-      holoAbout.rotation.z -= dt * 0.35;
-      holoHonors.rotation.z += dt * 0.5;
-      holoContact.rotation.z -= dt * 0.45;
-
       holoProjects.material.opacity = 0.4 + Math.sin(time * 2.5) * 0.18;
-      holoAbout.material.opacity = 0.4 + Math.sin(time * 2.2 + 1.0) * 0.18;
-      holoHonors.material.opacity = 0.45 + Math.sin(time * 2.8 + 2.0) * 0.18;
-      holoContact.material.opacity = 0.4 + Math.sin(time * 2.0 + 3.0) * 0.18;
+      holoAbout.material.opacity = 0.4 + Math.sin(time * 2.2 + 1) * 0.18;
+      holoHonors.material.opacity = 0.45 + Math.sin(time * 2.8 + 2) * 0.18;
+      holoContact.material.opacity = 0.4 + Math.sin(time * 2 + 3) * 0.18;
     }
 
-    frameCount++;
-    composer.render();
-    dirty = false;
-    if (
-      motion ||
-      Math.abs(targetScrollProgress - scrollProgress) > 0.0003 ||
-      controls.enableDamping ||
-      robotWave > 0 ||
-      trophySpinBonus > 0 ||
-      choynakSteamTimer > 0
-    ) {
-      schedule();
+    scene.updateMatrixWorld();
+    if (hoverDirty && now - lastHoverTime > 80) {
+      checkHover();
+      lastHoverTime = now;
     }
+    if (!eco() && effects) effects.composer.render();
+    else renderer.render(scene, camera);
+    if (import.meta.env.DEV) {
+      host.dataset.renderedFrames = ++renderedFrames;
+      host.dataset.drawCalls = renderer.info.render.calls;
+    }
+    updateMarker();
+    dirty = false;
+
+    // Auto quality reacts to sustained slow frames, avoiding shader warmup.
+    if (motion && qualityMode === "auto" && ++sampleFrames > 90) {
+      averageFrame += (dt - averageFrame) * 0.05;
+      if (now - lastQualityChange > 6000) {
+        const previousScale = adaptiveScale;
+        if (averageFrame > (eco() ? 0.055 : 0.035))
+          adaptiveScale = Math.max(0.65, adaptiveScale - 0.15);
+        else if (averageFrame < (eco() ? 0.037 : 0.021))
+          adaptiveScale = Math.min(1, adaptiveScale + 0.1);
+        if (previousScale !== adaptiveScale) {
+          lastQualityChange = now;
+          resize();
+        }
+      }
+    }
+    if (motion || travelling || (isFreeOrbit && controlsChanged) || hoverDirty)
+      schedule();
   }
 
   function schedule() {
-    if (!raf && !document.hidden) raf = requestAnimationFrame(draw);
+    if (!raf && !document.hidden && !contextLost)
+      raf = requestAnimationFrame(draw);
   }
-
   controls.addEventListener("change", () => {
+    reflectionDirty = true;
     dirty = true;
     schedule();
   });
 
+  function updateFraming() {
+    const w = host.clientWidth,
+      h = host.clientHeight;
+    camera.setViewOffset(
+      w,
+      h,
+      isFreeOrbit ? 0 : w >= 1000 ? -w * 0.2 : 0,
+      !isFreeOrbit && w < 1000 ? h * 0.26 : 0,
+      w,
+      h,
+    );
+  }
   function resize() {
     const w = host.clientWidth,
       h = host.clientHeight;
+    if (!w || !h) return;
     camera.aspect = w / h;
-    camera.updateProjectionMatrix();
+    updateFraming();
+    const ratio =
+      Math.min(
+        window.devicePixelRatio || 1,
+        eco() ? 1 : 1.5,
+        Math.sqrt((eco() ? 950000 : 2400000) / (w * h)),
+      ) * adaptiveScale;
+    renderer.setPixelRatio(ratio);
     renderer.setSize(w, h, false);
-    composer.setSize(w, h);
-    bloom.resolution.set(Math.floor(w * 0.5), Math.floor(h * 0.5));
-    dirty = true;
+    if (effects) {
+      effects.composer.setPixelRatio(ratio);
+      effects.composer.setSize(w, h);
+      effects.bloom.setSize(
+        Math.round(w * ratio * 0.5),
+        Math.round(h * ratio * 0.5),
+      );
+    } else if (!eco() && !effectsPromise) {
+      effectsPromise = import("./effects.js")
+        .then(({ createEffects }) => {
+          effects = createEffects(renderer, scene, camera);
+          resize();
+        })
+        .catch((error) =>
+          console.warn(
+            "Bloom unavailable; direct rendering remains active.",
+            error,
+          ),
+        );
+    }
+    particleMat.uniforms.uPixelRatio.value = ratio;
+    host.dataset.graphics = eco() ? "eco" : "high";
+    floor.getRenderTarget().setSize(eco() ? 256 : 512, eco() ? 256 : 512);
+    reflectionDirty = dirty = true;
     schedule();
   }
-  new ResizeObserver(resize).observe(host);
+  const resizeObserver = new ResizeObserver(resize);
+  resizeObserver.observe(host);
 
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
       if (raf) cancelAnimationFrame(raf);
       raf = 0;
-      lastFrame = 0;
-    } else schedule();
+    } else {
+      lastFrame = lastRender = 0;
+      reflectionDirty = true;
+      schedule();
+    }
   });
 
-  // 3D Click Interaction to Trigger Actions & Fly to Stations
   let down = null;
-  renderer.domElement.addEventListener("pointerdown", (event) => {
-    down = { x: event.clientX, y: event.clientY };
-  });
-  renderer.domElement.addEventListener("pointerup", (event) => {
-    if (
-      !down ||
-      Math.hypot(event.clientX - down.x, event.clientY - down.y) > 8
-    ) {
-      down = null;
-      return;
-    }
-    const rect = host.getBoundingClientRect();
-    const clickPointer = new THREE.Vector2(
-      ((event.clientX - rect.left) / rect.width) * 2 - 1,
-      (-(event.clientY - rect.top) / rect.height) * 2 + 1,
-    );
-    raycaster.setFromCamera(clickPointer, camera);
-    const hits = raycaster.intersectObjects(root.children, true);
-    for (const hit of hits) {
-      let o = hit.object;
-      while (o && !o.userData.interactive && !o.userData.section) o = o.parent;
-      if (o?.userData.interactive) {
-        triggerInteractiveAction(o.userData.interactive);
-        if (options.onInteract) options.onInteract(o.userData.interactive);
-        break;
-      } else if (o?.userData.section && options.onSelect) {
-        options.onSelect(o.userData.section);
-        break;
-      }
-    }
+  function pointerDown(event) {
+    if (!isSceneTarget(event.target)) return;
+    down = { x: event.clientX, y: event.clientY, id: event.pointerId };
+  }
+  function pointerUp(event) {
+    if (!down || down.id !== event.pointerId) return;
+    const distance = Math.hypot(event.clientX - down.x, event.clientY - down.y);
     down = null;
+    if (distance > 8 || !isSceneTarget(event.target)) return;
+    const rect = host.getBoundingClientRect();
+    pointer.set(
+      ((event.clientX - rect.left) / rect.width) * 2 - 1,
+      -((event.clientY - rect.top) / rect.height) * 2 + 1,
+    );
+    const data = pick(pointer);
+    if (data?.interactive) triggerInteractiveAction(data.interactive);
+    else if (data?.section) options.onSelect?.(data.section);
+  }
+  for (const surface of new Set([renderer.domElement, interactionHost])) {
+    surface.addEventListener("pointerdown", pointerDown, { passive: true });
+    surface.addEventListener("pointerup", pointerUp, { passive: true });
+    surface.addEventListener("pointercancel", () => {
+      down = null;
+    });
+  }
+  host.addEventListener("keydown", (event) => {
+    if (!isFreeOrbit) return;
+    const actions = {
+      ArrowLeft: () => controls.rotateLeft(0.12),
+      ArrowRight: () => controls.rotateLeft(-0.12),
+      ArrowUp: () => controls.rotateUp(0.1),
+      ArrowDown: () => controls.rotateUp(-0.1),
+      "+": () => controls.dollyIn(1.12),
+      "=": () => controls.dollyIn(1.12),
+      "-": () => controls.dollyOut(1.12),
+    };
+    if (actions[event.key]) {
+      event.preventDefault();
+      actions[event.key]();
+      dirty = true;
+      schedule();
+    }
   });
 
   renderer.domElement.addEventListener("webglcontextlost", (event) => {
     event.preventDefault();
+    contextLost = true;
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
+    if (marker) marker.hidden = true;
     document.body.classList.add("no-webgl");
     document.querySelector("#scene-error").hidden = false;
+    options.onContextChange?.(false);
   });
   renderer.domElement.addEventListener("webglcontextrestored", () => {
+    contextLost = false;
     document.body.classList.remove("no-webgl");
     document.querySelector("#scene-error").hidden = true;
-    dirty = true;
-    schedule();
+    lastFrame = lastRender = 0;
+    options.onContextChange?.(true);
+    resize();
   });
 
+  await renderer.compileAsync(scene, camera);
   resize();
-  composer.render();
-
   return {
     setScrollProgress(p) {
-      targetScrollProgress = THREE.MathUtils.clamp(p, 0, 1);
+      const next = THREE.MathUtils.clamp(p, 0, 1);
+      if (next === targetScrollProgress) return;
+      targetScrollProgress = next;
       dirty = true;
       schedule();
     },
     setMotion(enabled) {
       motion = enabled;
-      controls.enableDamping = enabled;
-      lastFrame = 0;
+      controls.enableDamping = enabled && isFreeOrbit;
+      lastFrame = lastRender = 0;
       dirty = true;
       schedule();
     },
+    setQuality(mode) {
+      qualityMode = ["auto", "eco", "high"].includes(mode) ? mode : "auto";
+      adaptiveScale = 1;
+      averageFrame = 1 / 60;
+      sampleFrames = 0;
+      resize();
+    },
     toggleOrbit(enabled) {
       isFreeOrbit = typeof enabled === "boolean" ? enabled : !isFreeOrbit;
-      controls.enableZoom = isFreeOrbit;
-      controls.enableRotate = isFreeOrbit;
+      controls.enabled = isFreeOrbit;
+      controls.enableZoom = controls.enableRotate = isFreeOrbit;
+      controls.enableDamping = motion && isFreeOrbit;
+      updateFraming();
       dirty = true;
       schedule();
       return isFreeOrbit;
     },
-    interact(type) {
-      triggerInteractiveAction(type);
-    },
+    interact: triggerInteractiveAction,
     reset() {
-      targetScrollProgress = 0;
-      scrollProgress = 0;
+      targetScrollProgress = scrollProgress = 0;
+      pointer.set(0, 0);
       isFreeOrbit = false;
-      controls.enableZoom = false;
-      controls.enableRotate = false;
+      controls.enabled =
+        controls.enableZoom =
+        controls.enableRotate =
+        controls.enableDamping =
+          false;
+      updateFraming();
       dirty = true;
       schedule();
     },

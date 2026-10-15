@@ -44,8 +44,8 @@
       <div
         id="world"
         tabindex="0"
-        role="img"
-        aria-label="A neon-lit 3D workshop on a rainy night in Tashkent. Scroll to travel through the lab, or hover for parallax."
+        role="region"
+        aria-label="Interactive 3D Night Lab. Enable free orbit to rotate with arrow keys and zoom with plus or minus."
       ></div>
       <div class="vignette" aria-hidden="true"></div>
       <div class="grain" aria-hidden="true"></div>
@@ -69,8 +69,17 @@
             aria-pressed="false"
             aria-label="Toggle Free 3D Orbit Mode"
             title="Toggle Free 3D Orbit Mode"
+            disabled
           >
             <span aria-hidden="true">⟲</span>
+          </button>
+          <button
+            id="quality-toggle"
+            class="icon-button quality-button"
+            aria-label="Graphics quality: Auto. Switch to Eco"
+            title="Graphics quality: Auto. Switch to Eco"
+          >
+            <span aria-hidden="true">AUTO</span>
           </button>
           <button
             id="sound-toggle"
@@ -97,27 +106,52 @@
       <div id="interact-toast" class="interact-toast" aria-live="polite">
         <span id="toast-text">Toshkent Night Lab</span>
       </div>
+      <button
+        id="robot-label"
+        class="character-label"
+        data-interact="robot"
+        aria-label="Say hello to EL-01, the robot caretaker"
+        hidden
+      >
+        <span class="character-dot" aria-hidden="true"></span>
+        <span><b>EL-01</b><small>Your night-shift guide</small></span>
+        <span aria-hidden="true">↗</span>
+      </button>
+      <button id="exit-orbit" class="exit-orbit" hidden>
+        Drag to look around <span>Exit scene ↗</span>
+      </button>
 
       <!-- Scroll-Driven POV Storytelling Track -->
-      <div id="scroll-container" class="scroll-container" tabindex="0">
+      <div
+        id="scroll-container"
+        class="scroll-container"
+        tabindex="0"
+        role="region"
+        aria-label="Explore the portfolio"
+      >
         <!-- 00: HERO / THE LAB OVERVIEW -->
         <section class="story-section station-home" data-station="0">
           <div class="story-card hero-card">
             <span class="eyebrow"><i></i> OPEN AFTER DARK · TASHKENT</span>
             <h1>A little corner <br />of the <em>internet.</em></h1>
             <p>
-              Software, shaders & late-night code in Uzbekistan.<br />
-              Welcome to Elshodbek’s Night Lab.
+              Software, shaders & late-night ideas.<br />
+              Made in Tashkent, Uzbekistan.
             </p>
             <div class="hero-actions">
               <button class="action-btn" data-station="1">
                 Explore Projects <span>↓</span>
               </button>
-              <span id="load-status" class="load-status">Neon warming up…</span>
+              <button class="text-action" data-station="4">
+                Say hello <span>↗</span>
+              </button>
             </div>
+            <span id="load-status" class="load-status" role="status"
+              >Neon warming up…</span
+            >
             <div class="scroll-hint">
               <span class="mouse-icon"><i></i></span>
-              <span>SCROLL TO TRAVEL · CLICK 3D OBJECTS TO INTERACT</span>
+              <span>SCROLL TO EXPLORE THE LAB</span>
             </div>
           </div>
         </section>
@@ -128,7 +162,8 @@
             <div class="card-badge">01 / PROJECTS · THE EXHIBIT</div>
             <h2>Ideas, out in the wild.</h2>
             <p class="card-sub">
-              Pick something off the shelf. Real-time shaders, AI full-stack platforms, and developer tools.
+              Pick something off the shelf. Real-time shaders, AI full-stack
+              platforms, and developer tools.
             </p>
             <div class="projects-list">
               <article class="project-box">
@@ -137,10 +172,25 @@
                   <span class="project-tag">GLSL · OptiFine / Iris</span>
                 </div>
                 <h3>Cyberpunk Shader</h3>
-                <p>A cinematic shader pack giving Minecraft Java neon color palettes, volumetric lighting, and cyberpunk mood.</p>
+                <p>
+                  A cinematic shader pack giving Minecraft Java neon color
+                  palettes, volumetric lighting, and cyberpunk mood.
+                </p>
                 <div class="project-links">
-                  <a href="https://github.com/elshod-gosling/Cyberpunk-shader-.build" target="_blank" rel="noopener noreferrer" class="link-chip">GitHub ↗</a>
-                  <a href="https://www.curseforge.com/members/elshodbek/projects" target="_blank" rel="noopener noreferrer" class="link-chip secondary">CurseForge ↗</a>
+                  <a
+                    href="https://github.com/elshod-gosling/Cyberpunk-shader-.build"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="link-chip"
+                    >GitHub ↗</a
+                  >
+                  <a
+                    href="https://www.curseforge.com/members/elshodbek/projects"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="link-chip secondary"
+                    >CurseForge ↗</a
+                  >
                 </div>
               </article>
 
@@ -150,9 +200,19 @@
                   <span class="project-tag">Next.js · Python · FastAPI</span>
                 </div>
                 <h3>FinFlow AI</h3>
-                <p>AI-assisted financial visibility & business intelligence for SMEs in Uzbekistan. Built with the FstudentsTTT hackathon team.</p>
+                <p>
+                  AI-assisted financial visibility & business intelligence for
+                  SMEs in Uzbekistan. Built with the FstudentsTTT hackathon
+                  team.
+                </p>
                 <div class="project-links">
-                  <a href="https://github.com/FstudentsTTT/FinFlow" target="_blank" rel="noopener noreferrer" class="link-chip">GitHub ↗</a>
+                  <a
+                    href="https://github.com/FstudentsTTT/FinFlow"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="link-chip"
+                    >GitHub ↗</a
+                  >
                 </div>
               </article>
 
@@ -162,10 +222,25 @@
                   <span class="project-tag">EdTech · EN / UZ / RU</span>
                 </div>
                 <h3>ZEHN-EDU</h3>
-                <p>A multilingual arcade turning coding, logic, typing, and digital problem-solving into approachable visual challenges.</p>
+                <p>
+                  A multilingual arcade turning coding, logic, typing, and
+                  digital problem-solving into approachable visual challenges.
+                </p>
                 <div class="project-links">
-                  <a href="https://github.com/elshod-gosling/ZEHN-EDU" target="_blank" rel="noopener noreferrer" class="link-chip">GitHub ↗</a>
-                  <a href="https://elshod-gosling.github.io/ZEHN-EDU/" target="_blank" rel="noopener noreferrer" class="link-chip secondary">Live Demo ↗</a>
+                  <a
+                    href="https://github.com/elshod-gosling/ZEHN-EDU"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="link-chip"
+                    >GitHub ↗</a
+                  >
+                  <a
+                    href="https://elshod-gosling.github.io/ZEHN-EDU/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="link-chip secondary"
+                    >Live Demo ↗</a
+                  >
                 </div>
               </article>
 
@@ -175,13 +250,27 @@
                   <span class="project-tag">Python · Open Source</span>
                 </div>
                 <h3>elab</h3>
-                <p>Open-source Python utility suite crafted to streamline developer workflows and everyday scripting.</p>
+                <p>
+                  Open-source Python utility suite crafted to streamline
+                  developer workflows and everyday scripting.
+                </p>
                 <div class="project-links">
-                  <a href="https://github.com/elshod-gosling/elab" target="_blank" rel="noopener noreferrer" class="link-chip">GitHub ↗</a>
+                  <a
+                    href="https://github.com/elshod-gosling/elab"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="link-chip"
+                    >GitHub ↗</a
+                  >
                 </div>
               </article>
             </div>
-            <a class="more-link" href="https://github.com/elshod-gosling?tab=repositories" target="_blank" rel="noopener noreferrer">
+            <a
+              class="more-link"
+              href="https://github.com/elshod-gosling?tab=repositories"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               View all repositories on GitHub <span>↗</span>
             </a>
           </div>
@@ -193,25 +282,40 @@
             <div class="card-badge">02 / ABOUT · THE DEVELOPER</div>
             <h2>The human behind<br />the screen.</h2>
             <p class="card-sub">
-              Hey, I’m <span class="highlight">Elshodbek Ermuxammadov</span>, a developer from Tashkent, Uzbekistan. 
-              I live where technical depth meets creative execution. One day it’s low-level systems algorithms, 
-              the next it’s a GLSL shader changing the entire atmosphere of a world.
+              Hey, I’m <span class="highlight">Elshodbek Ermuxammadov</span>, a
+              developer from Tashkent, Uzbekistan. I live where technical depth
+              meets creative execution. One day it’s low-level systems
+              algorithms, the next it’s a GLSL shader changing the entire
+              atmosphere of a world.
             </p>
             <div class="skills-grid">
               <div class="skill-group">
                 <span class="skill-label">SYSTEMS & ARCHITECTURE</span>
-                <p>C++ · Python · TypeScript<br />Algorithms & full-stack development</p>
+                <p>
+                  C++ · Python · TypeScript<br />Algorithms & full-stack
+                  development
+                </p>
               </div>
               <div class="skill-group">
                 <span class="skill-label">SHADERS & GRAPHICS</span>
-                <p>GLSL · WebGL · Three.js · Blender<br />Shaders & real-time rendering</p>
+                <p>
+                  GLSL · WebGL · Three.js · Blender<br />Shaders & real-time
+                  rendering
+                </p>
               </div>
               <div class="skill-group">
                 <span class="skill-label">AFTER HOURS & TOOLS</span>
-                <p>C# · Unity · Linux · FastAPI<br />Game mechanics & open source</p>
+                <p>
+                  C# · Unity · Linux · FastAPI<br />Game mechanics & open source
+                </p>
               </div>
             </div>
-            <a class="collab-box" href="https://github.com/orgs/FstudentsTTT/repositories" target="_blank" rel="noopener noreferrer">
+            <a
+              class="collab-box"
+              href="https://github.com/orgs/FstudentsTTT/repositories"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <span>Also building with <b>FstudentsTTT</b></span>
               <span>↗</span>
             </a>
@@ -224,7 +328,8 @@
             <div class="card-badge">03 / HONORS · SIDE QUESTS & AWARDS</div>
             <h2>A competitive<br />streak.</h2>
             <p class="card-sub">
-              Mathematics, algorithmic reasoning, and the grit to push through complex problem domains.
+              Mathematics, algorithmic reasoning, and the grit to push through
+              complex problem domains.
             </p>
             <div class="honors-grid">
               <div class="honor-tile first-place">
@@ -261,22 +366,43 @@
             <div class="card-badge">04 / CONTACT · THE HOTLINE</div>
             <h2>Good things start<br />with a hello.</h2>
             <p class="card-sub">
-              Got a project, collaboration, or a wonderfully weird idea? The night lab is open.
+              Got a project, collaboration, or a wonderfully weird idea? The
+              night lab is open.
             </p>
             <div class="contact-channels">
-              <a href="https://t.me/elshod_gosling" target="_blank" rel="noopener noreferrer" class="contact-node featured">
+              <a
+                href="https://t.me/elshod_gosling"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="contact-node featured"
+              >
                 <span class="node-label">TELEGRAM</span>
                 <span class="node-val">@elshod_gosling ↗</span>
               </a>
-              <a href="https://github.com/elshod-gosling" target="_blank" rel="noopener noreferrer" class="contact-node">
+              <a
+                href="https://github.com/elshod-gosling"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="contact-node"
+              >
                 <span class="node-label">GITHUB</span>
                 <span class="node-val">elshod-gosling ↗</span>
               </a>
-              <a href="https://instagram.com/elshod.for.real" target="_blank" rel="noopener noreferrer" class="contact-node">
+              <a
+                href="https://instagram.com/elshod.for.real"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="contact-node"
+              >
                 <span class="node-label">INSTAGRAM</span>
                 <span class="node-val">@elshod.for.real ↗</span>
               </a>
-              <a href="https://www.curseforge.com/members/elshodbek/projects" target="_blank" rel="noopener noreferrer" class="contact-node">
+              <a
+                href="https://www.curseforge.com/members/elshodbek/projects"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="contact-node"
+              >
                 <span class="node-label">CURSEFORGE</span>
                 <span class="node-val">elshodbek ↗</span>
               </a>
@@ -312,7 +438,9 @@
       <!-- Scroll Progress Bar -->
       <div class="progress-hud" aria-hidden="true">
         <span id="station-indicator">01 / 05</span>
-        <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+        <div class="progress-track">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
       </div>
 
       <footer class="scene-footer">
@@ -321,12 +449,16 @@
           <span id="year">2026</span></span
         >
         <button id="reset-view">RESET VIEW ↺</button>
-        <span class="drag-note">SCROLL TO TRAVEL <i>·</i> HOVER FOR 3D PARALLAX</span>
+        <span class="drag-note"
+          >SCROLL TO TRAVEL <i>·</i> HOVER FOR 3D PARALLAX</span
+        >
       </footer>
 
       <div id="scene-error" class="scene-error" hidden>
         <p>The workshop is taking a night off on this device.</p>
-        <span>You can still explore everything using the navigation above.</span>
+        <span
+          >You can still explore everything using the navigation above.</span
+        >
       </div>
       <div id="announcement" class="sr-only" aria-live="polite"></div>
     </main>
