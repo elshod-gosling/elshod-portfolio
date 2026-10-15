@@ -7,9 +7,13 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
-const CYAN = 0x55ffed,
-  PINK = 0xff3aaf,
-  GOLD = 0xffb352;
+// Central Asian & Silk Road Cyberpunk Color Palette
+const TURQUOISE = 0x00e5d0,  // Samarkand Turquoise / Firuza
+  COBALT = 0x143f7a,     // Registan Deep Blue
+  GOLD = 0xffc444,       // Silk Road Saffron Gold
+  RUBY = 0xe6286b,       // Pomegranate Ruby / Anor
+  CYAN = 0x55ffed;
+
 const v3 = (x, y, z) => new THREE.Vector3(x, y, z);
 const random = (() => {
   let s = 73;
@@ -20,22 +24,25 @@ const random = (() => {
 })();
 
 export async function createWorkshop(host, options) {
-  options.onProgress("Switching on the workshop…");
-  const mobile = () => host.clientWidth < 650;
+  options.onProgress("Toshkent Night Lab ishga tushirilmoqda…");
+  const mobile = () => host.clientWidth < 768;
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
     powerPreference: "high-performance",
   });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, mobile() ? 1.5 : 1.6));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, mobile() ? 1.5 : 1.75));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.1;
-  renderer.setClearColor(0x070b18);
+  renderer.toneMappingExposure = 1.15;
+  renderer.setClearColor(0x060a16);
   host.append(renderer.domElement);
   renderer.domElement.setAttribute("aria-hidden", "true");
+
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x070b18);
-  scene.fog = new THREE.FogExp2(0x070b18, 0.023);
-  const camera = new THREE.PerspectiveCamera(37, 1, 0.1, 110);
+  scene.background = new THREE.Color(0x060a16);
+  scene.fog = new THREE.FogExp2(0x060a16, 0.02);
+
+  // Cinematic Perspective Camera with generous field of view and breathing room
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 150);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = options.motion;
   controls.dampingFactor = 0.06;
@@ -43,24 +50,25 @@ export async function createWorkshop(host, options) {
   controls.enableZoom = false; // Enabled only when user toggles Free Orbit
   controls.enableRotate = false; // Enabled only when user toggles Free Orbit
   controls.minPolarAngle = 0.35;
-  controls.maxPolarAngle = 1.55;
-  controls.minAzimuthAngle = -1.2;
+  controls.maxPolarAngle = 1.52;
+  controls.minAzimuthAngle = -1.4;
   controls.maxAzimuthAngle = 1.6;
-  controls.minDistance = 5;
-  controls.maxDistance = 42;
+  controls.minDistance = 6;
+  controls.maxDistance = 45;
   controls.rotateSpeed = 0.6;
   controls.zoomSpeed = 0.7;
-  controls.target.set(0, 2.2, 0);
-  camera.position.set(11.2, 7.2, 14.5);
+  controls.target.set(0, 2.3, 0);
+  camera.position.set(14.2, 8.5, 17.2);
+
   const composer = new EffectComposer(renderer);
   composer.renderTarget1.samples = mobile() ? 2 : 4;
   composer.renderTarget2.samples = mobile() ? 2 : 4;
   composer.addPass(new RenderPass(scene, camera));
   const bloom = new UnrealBloomPass(
     new THREE.Vector2(800, 600),
-    0.38,
-    0.4,
-    1.15,
+    0.42,
+    0.45,
+    0.92,
   );
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
@@ -81,15 +89,39 @@ export async function createWorkshop(host, options) {
       color: new THREE.Color(color).multiplyScalar(1.6),
       toneMapped: false,
     });
-  const cyanGlow = glow(CYAN),
-    pinkGlow = glow(PINK),
+  const cyanGlow = glow(TURQUOISE),
+    rubyGlow = glow(RUBY),
     goldGlow = glow(GOLD);
+
+  // Genuine Liquid Glass Material with transmission and physical refraction
+  const liquidGlassMat = new THREE.MeshPhysicalMaterial({
+    roughness: 0.08,
+    transmission: 0.94,
+    thickness: 1.2,
+    ior: 1.52,
+    transparent: true,
+    opacity: 0.9,
+    color: new THREE.Color(0xa5f4ff),
+    attenuationColor: new THREE.Color(0x00c4df),
+    attenuationDistance: 1.8,
+    metalness: 0.05,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.08,
+    specularIntensity: 1.0,
+    depthWrite: false,
+  });
+
   const root = new THREE.Group();
   scene.add(root);
+
   function box(w, h, d, x, y, z, color = 0x19243b, parent = root) {
     const o = new THREE.Mesh(
       unitBox,
-      typeof color === "number" ? mat(color) : color,
+      color instanceof THREE.Material
+        ? color
+        : typeof color === "number"
+          ? mat(color)
+          : color,
     );
     o.scale.set(w, h, d);
     o.position.set(x, y, z);
@@ -99,7 +131,11 @@ export async function createWorkshop(host, options) {
   function rounded(w, h, d, x, y, z, color, r = 0.06, parent = root) {
     const o = new THREE.Mesh(
       new RoundedBoxGeometry(w, h, d, 2, r),
-      typeof color === "number" ? mat(color) : color,
+      color instanceof THREE.Material
+        ? color
+        : typeof color === "number"
+          ? mat(color)
+          : color,
     );
     o.position.set(x, y, z);
     parent.add(o);
@@ -117,7 +153,11 @@ export async function createWorkshop(host, options) {
   ) {
     const o = new THREE.Mesh(
       new THREE.CylinderGeometry(radiusTop, radius, height, 20),
-      typeof color === "number" ? mat(color) : color,
+      color instanceof THREE.Material
+        ? color
+        : typeof color === "number"
+          ? mat(color)
+          : color,
     );
     o.position.set(x, y, z);
     parent.add(o);
@@ -126,7 +166,11 @@ export async function createWorkshop(host, options) {
   function sphere(radius, x, y, z, color, parent = root) {
     const o = new THREE.Mesh(
       new THREE.SphereGeometry(radius, 20, 12),
-      typeof color === "number" ? mat(color) : color,
+      color instanceof THREE.Material
+        ? color
+        : typeof color === "number"
+          ? mat(color)
+          : color,
     );
     o.position.set(x, y, z);
     parent.add(o);
@@ -142,7 +186,11 @@ export async function createWorkshop(host, options) {
         7,
         false,
       ),
-      typeof color === "number" ? mat(color) : color,
+      color instanceof THREE.Material
+        ? color
+        : typeof color === "number"
+          ? mat(color)
+          : color,
     );
     parent.add(o);
     return o;
@@ -152,7 +200,11 @@ export async function createWorkshop(host, options) {
       end = v3(...b);
     const o = new THREE.Mesh(
       new THREE.CylinderGeometry(radius, radius, start.distanceTo(end), 8),
-      typeof color === "number" ? mat(color) : color,
+      color instanceof THREE.Material
+        ? color
+        : typeof color === "number"
+          ? mat(color)
+          : color,
     );
     o.position.copy(start).add(end).multiplyScalar(0.5);
     o.quaternion.setFromUnitVectors(v3(0, 1, 0), end.sub(start).normalize());
@@ -162,7 +214,7 @@ export async function createWorkshop(host, options) {
   function textTexture(
     lines,
     {
-      color = "#b5fff9",
+      color = "#a0fff6",
       background = null,
       font = "600",
       width = 1024,
@@ -186,7 +238,7 @@ export async function createWorkshop(host, options) {
     c.font = `${font} ${fontSize}px "Inter Tight", Arial`;
     rows.forEach((line, i) => {
       const y = height / 2 + (i - (rows.length - 1) / 2) * fontSize * 1.05;
-      c.shadowBlur = 7;
+      c.shadowBlur = 8;
       c.shadowColor = color;
       c.fillStyle = color;
       c.fillText(line, align === "center" ? width / 2 : 35, y, width - 50);
@@ -218,20 +270,21 @@ export async function createWorkshop(host, options) {
     bar([x - w / 2, y - h / 2, z], [x + w / 2, y - h / 2, z], r, color, parent);
     bar([x - w / 2, y + h / 2, z], [x + w / 2, y + h / 2, z], r, color, parent);
   }
+
   const loader = new THREE.TextureLoader();
   const [shaderImage] = await Promise.all([
     loader
       .loadAsync(`${import.meta.env.BASE_URL}assets/cyberpunk.webp`)
       .catch(() => null),
   ]);
-  for (const image of [shaderImage])
-    if (image) {
-      image.colorSpace = THREE.SRGBColorSpace;
-      image.anisotropy = 4;
-    }
-  options.onProgress("Stocking the project shelf…");
+  if (shaderImage) {
+    shaderImage.colorSpace = THREE.SRGBColorSpace;
+    shaderImage.anisotropy = 4;
+  }
 
-  // Pavement: a live planar reflection with a subtle wet-surface distortion.
+  options.onProgress("Toshkent Night Lab bezatilmoqda…");
+
+  // Wet pavement with live planar reflection and rain ripple distortion
   const floorShader = {
     ...Reflector.ReflectorShader,
     uniforms: THREE.UniformsUtils.clone(Reflector.ReflectorShader.uniforms),
@@ -254,7 +307,7 @@ export async function createWorkshop(host, options) {
     )
     .replace(
       "vec4( blendOverlay( base.rgb, color ), 1.0 )",
-      "vec4(mix(vec3(.0021,.00335,.0091),base.rgb*.46,exp(-length(vGround)*.018)),1.0)",
+      "vec4(mix(vec3(.0021,.00335,.0091),base.rgb*.48,exp(-length(vGround)*.018)),1.0)",
     );
   const floor = new Reflector(new THREE.PlaneGeometry(160, 160), {
     textureWidth: mobile() ? 512 : 1024,
@@ -266,14 +319,15 @@ export async function createWorkshop(host, options) {
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = -0.025;
   scene.add(floor);
-  // A raised sidewalk gives the diorama a physical edge against its reflections.
-  box(9.1, 0.23, 6.4, 0, 0.105, 0.25, 0x1a2437);
-  box(9.15, 0.055, 0.09, 0, 0.225, 3.48, 0x3c5262);
-  box(0.09, 0.055, 6.4, 4.53, 0.225, 0.25, 0x394657);
+
+  // Sidewalk with paving edge
+  box(9.1, 0.23, 6.4, 0, 0.105, 0.25, 0x162135);
+  box(9.15, 0.055, 0.09, 0, 0.225, 3.48, 0x364859);
+  box(0.09, 0.055, 6.4, 4.53, 0.225, 0.25, 0x334050);
   for (let i = 0; i < 14; i++)
-    box(0.018, 0.007, 6.3, -4.3 + i * 0.65, 0.226, 0.2, 0x101728);
+    box(0.018, 0.007, 6.3, -4.3 + i * 0.65, 0.226, 0.2, 0x0e1424);
   for (let i = 0; i < 10; i++)
-    box(9, 0.008, 0.018, 0, 0.227, -2.7 + i * 0.65, 0x101728);
+    box(9, 0.008, 0.018, 0, 0.227, -2.7 + i * 0.65, 0x0e1424);
   for (let i = 0; i < 7; i++)
     box(
       0.3,
@@ -284,7 +338,8 @@ export async function createWorkshop(host, options) {
       3.12,
       i % 2 ? 0x151c2b : 0xb67b31,
     );
-  // Soft pools of spilled neon, separate from the sharp reflected signage.
+
+  // Soft pools of spilled neon
   const glowCanvas = document.createElement("canvas");
   glowCanvas.width = glowCanvas.height = 128;
   const gc = glowCanvas.getContext("2d");
@@ -294,6 +349,7 @@ export async function createWorkshop(host, options) {
   gc.fillStyle = gradient;
   gc.fillRect(0, 0, 128, 128);
   const glowTexture = new THREE.CanvasTexture(glowCanvas);
+
   function groundGlow(x, z, color, size, opacity = 0.3) {
     const o = new THREE.Mesh(
       new THREE.PlaneGeometry(size, size),
@@ -310,33 +366,40 @@ export async function createWorkshop(host, options) {
     o.position.set(x, 0.241, z);
     root.add(o);
   }
-  groundGlow(-1, 2, CYAN, 7, 0.28);
-  groundGlow(3, 1, PINK, 6, 0.28);
+  groundGlow(-1, 2, TURQUOISE, 7, 0.28);
+  groundGlow(3, 1, RUBY, 6, 0.28);
   groundGlow(-3, 2.6, GOLD, 3, 0.2);
 
+  // Group definitions for interactive stations
   const aboutGroup = new THREE.Group();
   aboutGroup.userData.section = "about";
   root.add(aboutGroup);
+
   const projectsGroup = new THREE.Group();
   projectsGroup.userData.section = "projects";
   root.add(projectsGroup);
+
   const honorsGroup = new THREE.Group();
   honorsGroup.userData.section = "honors";
   root.add(honorsGroup);
+
   const contactGroup = new THREE.Group();
   contactGroup.userData.section = "contact";
   root.add(contactGroup);
-  // The booth is open at the front, with an actual furnished interior.
-  box(5.2, 0.22, 3.5, 0, 0.35, -0.35, 0x14233a);
-  box(5.2, 3.1, 0.16, 0, 1.95, -2.0, 0x17243c);
-  box(0.17, 3.1, 3.5, -2.53, 1.95, -0.35, 0x20354d);
-  box(0.17, 3.1, 3.5, 2.53, 1.95, -0.35, 0x20324a);
-  box(5.5, 0.22, 3.85, 0, 3.58, -0.35, 0x182438);
-  box(5.65, 0.07, 3.92, 0, 3.72, -0.35, 0x3d405e);
+
+  // The Lab Booth Structure
+  box(5.2, 0.22, 3.5, 0, 0.35, -0.35, 0x122036);
+  box(5.2, 3.1, 0.16, 0, 1.95, -2.0, 0x152238);
+  box(0.17, 3.1, 3.5, -2.53, 1.95, -0.35, 0x1d3047);
+  box(0.17, 3.1, 3.5, 2.53, 1.95, -0.35, 0x1d2e44);
+  box(5.5, 0.22, 3.85, 0, 3.58, -0.35, 0x162234);
+  box(5.65, 0.07, 3.92, 0, 3.72, -0.35, 0x363a54);
   for (let i = 0; i < 14; i++)
-    box(0.04, 0.04, 3.8, -2.6 + i * 0.4, 3.78, -0.35, 0x48516c);
-  for (const x of [-2.46, 2.46]) box(0.18, 2.8, 0.18, x, 1.86, 1.34, 0x414052);
-  box(4.75, 1.15, 0.54, 0, 1.02, 1.24, 0x2c3047, aboutGroup);
+    box(0.04, 0.04, 3.8, -2.6 + i * 0.4, 3.78, -0.35, 0x424a64);
+  for (const x of [-2.46, 2.46]) box(0.18, 2.8, 0.18, x, 1.86, 1.34, 0x3c3c4e);
+
+  // Workbench Counter with Central Asian woodwork inlays
+  box(4.75, 1.15, 0.54, 0, 1.02, 1.24, 0x242a3e, aboutGroup);
   for (let i = 0; i < 13; i++)
     box(
       0.24,
@@ -345,14 +408,19 @@ export async function createWorkshop(host, options) {
       -2.16 + i * 0.36,
       1.02,
       1.53,
-      i % 2 ? 0x42344b : 0x34324a,
+      i % 2 ? 0x163452 : 0x202b42,
       aboutGroup,
     );
-  box(5.22, 0.13, 0.87, 0, 1.67, 1.3, 0x73504b, aboutGroup);
-  box(5.22, 0.035, 0.04, 0, 1.72, 1.75, 0xc18868, aboutGroup);
-  box(5.1, 0.035, 0.03, 0, 0.51, 1.57, pinkGlow, aboutGroup);
-  // Hanging perforated tool wall and shelves.
-  box(4.5, 1.75, 0.065, 0, 2.27, -1.87, 0x26364f);
+  box(5.22, 0.13, 0.87, 0, 1.67, 1.3, 0x5a3e3b, aboutGroup);
+  box(5.22, 0.035, 0.04, 0, 1.72, 1.75, 0xab7356, aboutGroup);
+  box(5.1, 0.035, 0.03, 0, 0.51, 1.57, cyanGlow, aboutGroup);
+
+  // Front Liquid Glass window on the workshop
+  box(4.78, 1.42, 0.03, 0, 2.45, 1.48, liquidGlassMat, aboutGroup);
+  frame(4.8, 1.44, 0, 2.45, 1.49, mat(0xb88835, 0.6, 0.2), aboutGroup, 0.016);
+
+  // Hanging tool wall and shelves
+  box(4.5, 1.75, 0.065, 0, 2.27, -1.87, 0x223046);
   for (let x = 0; x < 18; x++)
     for (let y = 0; y < 7; y++)
       box(
@@ -362,9 +430,9 @@ export async function createWorkshop(host, options) {
         -2.1 + x * 0.24,
         1.65 + y * 0.22,
         -1.826,
-        0x586379,
+        0x4f5a6f,
       );
-  box(4.2, 0.09, 0.36, 0, 2.85, -1.57, 0x75634e);
+  box(4.2, 0.09, 0.36, 0, 2.85, -1.57, 0x6a5843);
   for (let i = 0; i < 9; i++) {
     const height = 0.18 + random() * 0.17;
     box(
@@ -374,25 +442,27 @@ export async function createWorkshop(host, options) {
       -1.8 + i * 0.2,
       2.94 + height / 2,
       -1.55,
-      [0x376b74, 0x72505e, 0x8a7444][i % 3],
+      [0x184282, 0x00a896, 0xb88835][i % 3],
     );
   }
   label(
-    "KEEP MAKING THINGS.",
-    2.2,
+    "KOD VA IJOD · TASHKENT",
+    2.4,
     0.22,
     0.25,
     2.51,
     -1.81,
-    { size: 60, color: "#87a7bf", font: "500" },
+    { size: 55, color: "#80d5d0", font: "600" },
     aboutGroup,
   );
   box(4.75, 0.04, 0.03, 0, 3.25, 1.28, cyanGlow);
 
-  // Live animated GLSL Cyberpunk shader for the main monitor screen
+  // 3-Mode Animated Cyber / Silk Road GLSL Shader for the Primary Monitor
+  let currentShaderMode = 0;
   const cyberScreenShader = new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
+      uMode: { value: 0 },
       uTexture: { value: shaderImage || new THREE.Texture() },
     },
     vertexShader: `
@@ -404,33 +474,47 @@ export async function createWorkshop(host, options) {
     `,
     fragmentShader: `
       uniform float uTime;
+      uniform int uMode;
       uniform sampler2D uTexture;
       varying vec2 vUv;
 
       void main() {
         vec2 uv = vUv;
-        // Cyber scanlines
-        float scanline = sin(uv.y * 220.0 + uTime * 6.0) * 0.06;
-        // Perspective digital cyber grid on screen
-        vec2 p = uv * 2.0 - 1.0;
-        float gridY = 0.5 / (abs(p.y) + 0.12) + uTime * 0.6;
-        float gridX = p.x / (abs(p.y) + 0.12);
-        float grid = (step(0.91, fract(gridX * 3.5)) + step(0.91, fract(gridY * 3.5))) * 0.22;
+        float scanline = sin(uv.y * 220.0 + uTime * 6.0) * 0.05;
+        vec3 col = vec3(0.02, 0.05, 0.12);
+        vec3 turquoise = vec3(0.0, 0.9, 0.82);
+        vec3 gold = vec3(1.0, 0.77, 0.27);
+        vec3 ruby = vec3(0.9, 0.16, 0.42);
 
-        // Matrix rain / code pulse stream
-        float stream = sin(uv.y * 32.0 - uTime * 10.0 + sin(uv.x * 24.0) * 5.0);
-        stream = smoothstep(0.72, 0.98, stream) * 0.38;
+        if (uMode == 0) {
+          // Mode 0: Cyber Matrix Rain & Perspective Horizon
+          vec2 p = uv * 2.0 - 1.0;
+          float gridY = 0.5 / (abs(p.y) + 0.12) + uTime * 0.6;
+          float gridX = p.x / (abs(p.y) + 0.12);
+          float grid = (step(0.91, fract(gridX * 3.5)) + step(0.91, fract(gridY * 3.5))) * 0.22;
+          float stream = sin(uv.y * 32.0 - uTime * 10.0 + sin(uv.x * 24.0) * 5.0);
+          stream = smoothstep(0.72, 0.98, stream) * 0.38;
+          vec4 tex = texture2D(uTexture, uv);
+          vec3 base = tex.a > 0.05 ? tex.rgb * 1.15 : vec3(0.04, 0.08, 0.16);
+          col = base + turquoise * (grid + stream) + ruby * 0.06;
+        } else if (uMode == 1) {
+          // Mode 1: Neon Audio Waveform / Synthesizer
+          float wave1 = sin(uv.x * 18.0 + uTime * 4.0) * 0.18 + 0.5;
+          float wave2 = cos(uv.x * 28.0 - uTime * 3.0) * 0.12 + 0.5;
+          float line1 = smoothstep(0.03, 0.0, abs(uv.y - wave1));
+          float line2 = smoothstep(0.02, 0.0, abs(uv.y - wave2));
+          float bars = step(0.65, fract(uv.x * 30.0)) * step(uv.y, 0.5 + sin(uv.x * 20.0 + uTime * 5.0) * 0.3);
+          col = vec3(0.02, 0.05, 0.1) + turquoise * line1 * 1.2 + gold * line2 * 1.4 + turquoise * bars * 0.25;
+        } else {
+          // Mode 2: Central Asian Silk Road Digital Ikat
+          float ikat = sin(uv.y * 22.0 + sin(uv.x * 12.0 + uTime * 2.0) * 4.0);
+          ikat = smoothstep(-0.2, 0.8, ikat);
+          float diamond = abs(sin(uv.x * 14.0 + uv.y * 14.0 + uTime * 0.8)) + abs(sin(uv.x * 14.0 - uv.y * 14.0 - uTime * 0.8));
+          diamond = smoothstep(1.3, 1.8, diamond);
+          col = mix(vec3(0.04, 0.1, 0.24), turquoise, ikat * 0.6) + gold * diamond * 0.4 + ruby * 0.15;
+        }
 
-        vec4 tex = texture2D(uTexture, uv);
-        vec3 base = tex.a > 0.05 ? tex.rgb * 1.15 : vec3(0.04, 0.08, 0.16);
-
-        vec3 neonCyan = vec3(0.2, 0.96, 0.9);
-        vec3 neonPink = vec3(1.0, 0.22, 0.72);
-
-        vec3 col = base + neonCyan * (grid + stream) - scanline;
-        col += neonPink * (0.06 * sin(uTime * 1.8 + uv.x * 5.0));
-
-        // Edge vignette / bezel screen gradient
+        col -= scanline;
         float edge = smoothstep(0.0, 0.05, uv.x) * smoothstep(1.0, 0.95, uv.x) *
                      smoothstep(0.0, 0.05, uv.y) * smoothstep(1.0, 0.95, uv.y);
         col *= edge;
@@ -440,7 +524,11 @@ export async function createWorkshop(host, options) {
     toneMapped: false,
   });
 
-  function monitor(x, y, z, width, height, matOrTex) {
+  function monitor(x, y, z, width, height, matOrTex, isInteractive = false) {
+    const monGroup = new THREE.Group();
+    if (isInteractive) monGroup.userData.interactive = "monitor";
+    aboutGroup.add(monGroup);
+
     rounded(
       width + 0.14,
       height + 0.14,
@@ -448,9 +536,9 @@ export async function createWorkshop(host, options) {
       x,
       y,
       z,
-      0x10172b,
+      0x0f1526,
       0.05,
-      aboutGroup,
+      monGroup,
     );
     const screenMat = matOrTex instanceof THREE.Material
       ? matOrTex
@@ -464,8 +552,10 @@ export async function createWorkshop(host, options) {
       screenMat,
     );
     screen.position.set(x, y, z + 0.066);
-    aboutGroup.add(screen);
-    box(0.055, 0.27, 0.07, x, y - height / 2 - 0.18, z, 0x4a526a, aboutGroup);
+    if (isInteractive) screen.userData.interactive = "monitor";
+    monGroup.add(screen);
+
+    box(0.055, 0.27, 0.07, x, y - height / 2 - 0.18, z, 0x4a526a, monGroup);
     box(
       0.45,
       0.04,
@@ -474,7 +564,7 @@ export async function createWorkshop(host, options) {
       y - height / 2 - 0.32,
       z + 0.01,
       0x3a475c,
-      aboutGroup,
+      monGroup,
     );
     sphere(
       0.018,
@@ -482,10 +572,11 @@ export async function createWorkshop(host, options) {
       y - height / 2 - 0.045,
       z + 0.073,
       cyanGlow,
-      aboutGroup,
+      monGroup,
     );
+    return screen;
   }
-  monitor(-0.85, 2.26, 0.62, 1.55, 0.87, cyberScreenShader);
+  const mainScreen = monitor(-0.85, 2.26, 0.62, 1.55, 0.87, cyberScreenShader, true);
 
   const codeTexture = textTexture(
     [
@@ -493,24 +584,25 @@ export async function createWorkshop(host, options) {
       "  init shaders --target GLSL",
       "  Iris / OptiFine [OK]",
       "  120 FPS · Tashkent UTC+5",
-      "  building next gen...",
+      "  [CLICK SCREEN TO SWITCH MODE]",
     ],
     {
       color: "#83f8dc",
       background: "#081923",
-      size: 26,
+      size: 24,
       font: "500",
       width: 768,
       height: 400,
       align: "left",
     },
   );
-  monitor(0.95, 2.2, 0.64, 1.1, 0.75, codeTexture);
-  // Keyboard, mug, soldering tools, and the bright little power switch.
-  box(1, 0.045, 0.32, -0.8, 1.76, 1.21, 0x232a40, aboutGroup);
+  monitor(0.95, 2.2, 0.64, 1.1, 0.75, codeTexture, true);
+
+  // Mechanical Keyboard
+  box(1, 0.045, 0.32, -0.8, 1.76, 1.21, 0x1e2436, aboutGroup);
   const keys = new THREE.InstancedMesh(
     new THREE.BoxGeometry(0.053, 0.018, 0.044),
-    mat(0x728299),
+    mat(0x68788e),
     60,
   );
   const keyMatrix = new THREE.Matrix4();
@@ -523,14 +615,98 @@ export async function createWorkshop(host, options) {
     keys.setMatrixAt(i, keyMatrix);
   }
   aboutGroup.add(keys);
-  cylinder(0.09, 0.24, 1.84, 1.85, 1.28, 0x466b76, aboutGroup);
-  cylinder(0.075, 0.01, 1.84, 1.975, 1.28, 0x0b1528, aboutGroup);
-  const mugHandle = new THREE.Mesh(
-    new THREE.TorusGeometry(0.07, 0.016, 6, 15),
-    mat(0x466b76),
+
+  // Traditional Uzbek Choynak (Teapot) & Piyola (Tea Bowl) with Paxta / Cobalt Porcelain Pattern
+  const choynakGroup = new THREE.Group();
+  choynakGroup.position.set(1.85, 1.76, 1.25);
+  choynakGroup.userData.interactive = "choynak";
+  aboutGroup.add(choynakGroup);
+
+  const choyPot = new THREE.Mesh(
+    new THREE.SphereGeometry(0.125, 20, 16),
+    mat(0x143f7a, 0.3, 0.2), // Cobalt blue porcelain
   );
-  mugHandle.position.set(1.95, 1.86, 1.28);
-  aboutGroup.add(mugHandle);
+  choyPot.scale.set(1.15, 0.95, 1.15);
+  choyPot.position.y = 0.12;
+  choyPot.userData.interactive = "choynak";
+  choynakGroup.add(choyPot);
+
+  // Gold trim ring around choynak belly
+  const choyTrim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.138, 0.007, 6, 24),
+    glow(GOLD),
+  );
+  choyTrim.rotation.x = Math.PI / 2;
+  choyTrim.position.y = 0.12;
+  choynakGroup.add(choyTrim);
+
+  // Teapot domed lid with golden finial
+  cylinder(0.075, 0.035, 0, 0.22, 0, 0xf5f5fa, choynakGroup, 0.05);
+  sphere(0.02, 0, 0.25, 0, glow(GOLD), choynakGroup);
+
+  // Curved spout
+  pipe(
+    [
+      [0.08, 0.08, 0],
+      [0.16, 0.13, 0],
+      [0.2, 0.21, 0],
+    ],
+    0.02,
+    0x143f7a,
+    choynakGroup,
+  );
+
+  // Arched handle
+  const choyHandle = new THREE.Mesh(
+    new THREE.TorusGeometry(0.085, 0.014, 8, 20, Math.PI * 1.15),
+    mat(0x143f7a, 0.2, 0.3),
+  );
+  choyHandle.rotation.z = Math.PI * 0.85;
+  choyHandle.position.set(-0.1, 0.12, 0);
+  choynakGroup.add(choyHandle);
+
+  // Piyola (Uzbek traditional tea bowl)
+  const piyola = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.045, 0.065, 18),
+    mat(0xf5f5fa, 0.2, 0.2),
+  );
+  piyola.position.set(1.52, 1.79, 1.25);
+  piyola.userData.interactive = "choynak";
+  aboutGroup.add(piyola);
+
+  const piyolaRim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.08, 0.006, 6, 20),
+    glow(TURQUOISE),
+  );
+  piyolaRim.rotation.x = Math.PI / 2;
+  piyolaRim.position.set(1.52, 1.825, 1.25);
+  aboutGroup.add(piyolaRim);
+
+  cylinder(0.072, 0.01, 1.52, 1.81, 1.25, glow(0xffa834), aboutGroup);
+
+  // Tea steam particles
+  const steamCount = 28;
+  const steamGeo = new THREE.BufferGeometry();
+  const steamPositions = new Float32Array(steamCount * 3);
+  const steamLifes = new Float32Array(steamCount);
+  for (let i = 0; i < steamCount; i++) {
+    steamPositions[i * 3 + 0] = 1.85 + (random() - 0.5) * 0.15;
+    steamPositions[i * 3 + 1] = 1.95 + random() * 0.45;
+    steamPositions[i * 3 + 2] = 1.25 + (random() - 0.5) * 0.15;
+    steamLifes[i] = random();
+  }
+  steamGeo.setAttribute("position", new THREE.BufferAttribute(steamPositions, 3));
+  const steamMat = new THREE.PointsMaterial({
+    size: 0.055,
+    color: 0x9be8ff,
+    transparent: true,
+    opacity: 0.45,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const teaSteam = new THREE.Points(steamGeo, steamMat);
+  aboutGroup.add(teaSteam);
+
   for (let i = 0; i < 5; i++)
     box(
       0.03,
@@ -539,27 +715,30 @@ export async function createWorkshop(host, options) {
       -1.96 + i * 0.055,
       1.86,
       0.76,
-      [0x8d6474, 0x577d78, 0xb9914f][i % 3],
+      [0x184282, 0x00a896, 0xb88835][i % 3],
       aboutGroup,
     );
-  cylinder(0.17, 0.1, -1.85, 1.75, 0.76, 0x353345, aboutGroup);
+  cylinder(0.17, 0.1, -1.85, 1.75, 0.76, 0x2e2c3c, aboutGroup);
+
   label(
-    "REAL-TIME / REAL CURIOUS",
-    2.2,
+    "CHUQUR MANTIQ · TOZA KOD",
+    2.4,
     0.15,
     0,
     0.88,
     1.557,
-    { size: 40, color: "#d7a5bf" },
+    { size: 40, color: "#98e8e2" },
     aboutGroup,
   );
 
-  // Striped canvas awning, with scalloped valance and glowing frame.
+  // Uzbek Khan-Atlas & Samarkand Turquoise Awning
   const awning = new THREE.Group();
   awning.position.set(0, 3.33, 1.68);
   awning.rotation.x = 0.22;
   root.add(awning);
+  const atlasColors = [0x00d2be, 0x143f7a, 0xb81b4d, 0xffc444];
   for (let i = 0; i < 12; i++) {
+    const col = atlasColors[i % 4];
     box(
       0.47,
       0.075,
@@ -567,7 +746,7 @@ export async function createWorkshop(host, options) {
       -2.585 + i * 0.47,
       0,
       0,
-      i % 2 ? 0x432b59 : 0x6b3567,
+      col,
       awning,
     );
     box(
@@ -577,49 +756,57 @@ export async function createWorkshop(host, options) {
       -2.585 + i * 0.47,
       -0.12,
       0.65,
-      i % 2 ? 0x432b59 : 0x6b3567,
+      col,
       awning,
     );
   }
-  bar([-2.84, -0.03, 0.68], [2.84, -0.03, 0.68], 0.025, pinkGlow, awning);
+  bar([-2.84, -0.03, 0.68], [2.84, -0.03, 0.68], 0.025, goldGlow, awning);
   for (const x of [-2.6, 2.6])
-    bar([x, 3.32, 2.31], [x, 2.82, 1.35], 0.035, 0x55516b);
-  // Main marquee: typography is part of the building, not an overlay.
-  rounded(5.5, 1.08, 0.24, 0, 4.35, 1.25, 0x22233e, 0.06);
-  box(5.23, 0.85, 0.02, 0, 4.35, 1.382, 0x101b30);
-  frame(5.35, 0.94, 0, 4.35, 1.41, pinkGlow, root, 0.024);
-  frame(5.13, 0.75, 0, 4.35, 1.425, mat(0x407b86), root, 0.01);
-  label("ELSHOD’S", 4.8, 0.64, 0, 4.47, 1.44, {
-    size: 134,
+    bar([x, 3.32, 2.31], [x, 2.82, 1.35], 0.035, 0x484860);
+
+  // Main Marquee with Central Asian 8-pointed star icons & Uzbek Subtitle
+  rounded(5.5, 1.15, 0.24, 0, 4.35, 1.25, 0x151c32, 0.06);
+  box(5.23, 0.92, 0.02, 0, 4.35, 1.382, 0x0a1222);
+  frame(5.35, 1.02, 0, 4.35, 1.41, cyanGlow, root, 0.024);
+  frame(5.13, 0.82, 0, 4.35, 1.425, goldGlow, root, 0.012);
+  label("ELSHOD’S", 4.8, 0.62, 0, 4.54, 1.44, {
+    size: 130,
     color: "#aafff5",
-    font: "650",
+    font: "700",
   });
-  label("N I G H T   L A B", 3.75, 0.24, 0, 4.08, 1.44, {
-    size: 64,
-    color: "#ff9bde",
+  label("✦  N I G H T   L A B  ✦", 4.2, 0.24, 0, 4.18, 1.44, {
+    size: 66,
+    color: "#ffd152",
+    font: "600",
+  });
+  label("TOSHKENT · TUNGI LABORATORIYA", 3.2, 0.16, 0, 3.92, 1.44, {
+    size: 40,
+    color: "#00e5d0",
     font: "500",
   });
   for (const x of [-2.15, 2.15])
-    bar([x, 3.74, 1.17], [x, 3.88, 1.17], 0.055, 0x353653);
-  // Rooftop utility boxes, pipes, a satellite dish, and a trophy sign.
-  rounded(1.18, 0.64, 0.85, 1.48, 4.12, -0.72, 0x535369, 0.05);
+    bar([x, 3.74, 1.17], [x, 3.88, 1.17], 0.055, 0x2e3048);
+
+  // Rooftop utility, satellite dish, and honors
+  rounded(1.18, 0.64, 0.85, 1.48, 4.12, -0.72, 0x4a4a5e, 0.05);
   const fan = new THREE.Group();
   fan.position.set(1.48, 4.13, -0.269);
   root.add(fan);
   const fanRing = new THREE.Mesh(
     new THREE.TorusGeometry(0.24, 0.022, 8, 32),
-    mat(0x263348),
+    mat(0x222c3e),
   );
   fan.add(fanRing);
   const fanBlades = new THREE.Group();
   fan.add(fanBlades);
   for (let i = 0; i < 5; i++) {
-    const blade = box(0.115, 0.35, 0.018, 0, 0.08, 0.015, 0x222c43, fanBlades);
+    const blade = box(0.115, 0.35, 0.018, 0, 0.08, 0.015, 0x1d263a, fanBlades);
     blade.rotation.z = (i * Math.PI * 2) / 5;
   }
-  sphere(0.055, 1.48, 4.13, -0.237, 0x66718a);
+  sphere(0.055, 1.48, 4.13, -0.237, 0x5a647c);
   for (let i = 0; i < 6; i++)
-    box(0.1, 0.28, 0.025, 0.75 + i * 0.065, 4.1, -0.265, 0x202b40);
+    box(0.1, 0.28, 0.025, 0.75 + i * 0.065, 4.1, -0.265, 0x1b2438);
+
   pipe(
     [
       [-2.65, 1, -0.5],
@@ -628,7 +815,7 @@ export async function createWorkshop(host, options) {
       [-2.1, 4.1, -1],
     ],
     0.07,
-    0x9b7153,
+    0x8a6345,
   );
   pipe(
     [
@@ -637,93 +824,113 @@ export async function createWorkshop(host, options) {
       [2.67, 2.9, 0.2],
     ],
     0.055,
-    0x80706c,
+    0x72625e,
   );
   for (let i = 0; i < 4; i++)
-    cylinder(0.32, 0.055, -1.2, 3.9 + i * 0.14, -0.8, 0x42465b);
-  cylinder(0.28, 0.7, -1.2, 4.19, -0.8, 0x323a51);
+    cylinder(0.32, 0.055, -1.2, 3.9 + i * 0.14, -0.8, 0x3a3e52);
+  cylinder(0.28, 0.7, -1.2, 4.19, -0.8, 0x2b3248);
+
   const dish = new THREE.Mesh(
     new THREE.SphereGeometry(0.48, 24, 12, 0, Math.PI * 2, 0, 0.65),
-    mat(0x8392a0, 0.45, 0.45),
+    mat(0x768594, 0.45, 0.45),
   );
   dish.rotation.set(-0.6, 0.2, -0.4);
   dish.position.set(-1.22, 4.7, -0.85);
   root.add(dish);
-  bar([-1.2, 4.5, -0.8], [-0.85, 4.95, -0.5], 0.017, 0x6e86a4);
+  bar([-1.2, 4.5, -0.8], [-0.85, 4.95, -0.5], 0.017, 0x5e7490);
+
+  // Central Asian 8-Pointed Star Trophy (Rub al-Hizb / Qomusiy Yulduz)
   const trophy = new THREE.Group();
   trophy.position.set(-0.4, 4.65, 0.05);
+  trophy.userData.interactive = "trophy";
   honorsGroup.add(trophy);
+
   const starShape = new THREE.Shape();
-  for (let i = 0; i < 10; i++) {
-    const a = (i * Math.PI) / 5 + Math.PI / 2,
-      r = i % 2 ? 0.16 : 0.36;
-    const x = Math.cos(a) * r,
-      y = Math.sin(a) * r;
+  for (let i = 0; i < 16; i++) {
+    const a = (i * Math.PI) / 8 + Math.PI / 2;
+    const r = i % 2 ? 0.22 : 0.44;
+    const x = Math.cos(a) * r;
+    const y = Math.sin(a) * r;
     if (i === 0) starShape.moveTo(x, y);
     else starShape.lineTo(x, y);
   }
   starShape.closePath();
+
   const star = new THREE.Mesh(
     new THREE.ExtrudeGeometry(starShape, {
-      depth: 0.065,
+      depth: 0.07,
       bevelEnabled: true,
-      bevelSize: 0.018,
-      bevelThickness: 0.01,
-      bevelSegments: 1,
-      steps: 1,
+      bevelSize: 0.02,
+      bevelThickness: 0.015,
+      bevelSegments: 2,
     }),
     goldGlow,
   );
-  star.position.y = 0.19;
+  star.position.y = 0.22;
+  star.userData.interactive = "trophy";
   trophy.add(star);
-  cylinder(0.035, 0.3, 0, -0.12, 0, 0xc79557, trophy);
-  box(0.62, 0.12, 0.38, 0, -0.31, 0, 0x514a49, trophy);
-  box(1.55, 0.32, 0.07, -0.4, 5.27, 0.04, 0x251c35, honorsGroup);
+
+  cylinder(0.04, 0.32, 0, -0.12, 0, 0xc79557, trophy);
+  box(0.68, 0.14, 0.42, 0, -0.32, 0, 0x3d3548, trophy);
+
+  // Liquid Glass protective vitrine showcase for the star trophy
+  box(0.72, 0.95, 0.52, 0, 0.15, 0, liquidGlassMat, trophy);
+  frame(0.74, 0.97, 0, 0.15, 0.26, goldGlow, trophy, 0.012);
+
+  box(1.7, 0.34, 0.07, -0.4, 5.35, 0.04, 0x1c2138, honorsGroup);
   label(
-    "SIDE QUESTS ★",
-    1.45,
-    0.23,
+    "NATIJALAR · HONORS ✦",
+    1.6,
+    0.24,
     -0.4,
-    5.27,
+    5.35,
     0.082,
-    { color: "#ffd09a", size: 80 },
+    { color: "#ffd09a", size: 76 },
     honorsGroup,
   );
 
-  // Project vending machine. Each brightly colored cartridge represents a build.
-  rounded(1.45, 2.62, 1.04, 3.34, 1.55, 0.58, 0x65334f, 0.09, projectsGroup);
-  rounded(1.28, 2.39, 0.07, 3.34, 1.59, 1.12, 0x2d243e, 0.035, projectsGroup);
-  box(0.91, 1.57, 0.06, 3.17, 1.78, 1.176, 0x091d31, projectsGroup);
+  // Project Vending Machine with Liquid Glass Display Front
+  rounded(1.45, 2.62, 1.04, 3.34, 1.55, 0.58, 0x5a2d46, 0.09, projectsGroup);
+  rounded(1.28, 2.39, 0.07, 3.34, 1.59, 1.12, 0x271f36, 0.035, projectsGroup);
+  box(0.91, 1.57, 0.06, 3.17, 1.78, 1.176, 0x081829, projectsGroup);
   frame(0.99, 1.65, 3.17, 1.78, 1.22, cyanGlow, projectsGroup, 0.016);
+
+  // Liquid Glass front panel on vending machine
+  box(1.26, 2.36, 0.03, 3.34, 1.6, 1.25, liquidGlassMat, projectsGroup);
+
   label(
-    "PROJECTS",
-    1.14,
+    "LOYIHALAR · PROJECTS",
+    1.18,
     0.25,
     3.34,
     2.66,
-    1.19,
-    { size: 100, color: "#92fff3" },
+    1.28,
+    { size: 90, color: "#80fff1" },
     projectsGroup,
   );
+
   const cartridgeColors = [
-    0x4ecdbb, 0x9e6ddd, 0xb77bd3, 0x5099c1, 0xc17d49, 0x648d86,
+    0x00d2be, 0x143f7a, 0xb81b4d, 0xffc444, 0x5099c1, 0x9e6ddd,
   ];
+  const cartridges = [];
   for (let i = 0; i < 6; i++) {
     const x = 2.94 + (i % 2) * 0.42,
       y = 2.25 - Math.floor(i / 2) * 0.49;
-    rounded(
+    const cart = rounded(
       0.24,
       0.32,
       0.2,
       x,
       y,
-      1.23,
+      1.21,
       cartridgeColors[i],
       0.025,
       projectsGroup,
     );
-    box(0.17, 0.09, 0.008, x, y + 0.025, 1.337, 0xc9dde0, projectsGroup);
-    cylinder(0.04, 0.04, x, y + 0.18, 1.23, 0x334557, projectsGroup);
+    cart.userData.interactive = "cartridge";
+    cartridges.push(cart);
+    box(0.17, 0.09, 0.008, x, y + 0.025, 1.317, 0xc9dde0, projectsGroup);
+    cylinder(0.04, 0.04, x, y + 0.18, 1.21, 0x2a3948, projectsGroup);
   }
   for (let i = 0; i < 3; i++)
     box(
@@ -732,8 +939,8 @@ export async function createWorkshop(host, options) {
       0.2,
       3.17,
       2.05 - i * 0.5,
-      1.23,
-      mat(0x445772),
+      1.21,
+      mat(0x38475e),
       projectsGroup,
     );
   for (let i = 0; i < 4; i++)
@@ -744,45 +951,39 @@ export async function createWorkshop(host, options) {
       3.86,
       2.11 - i * 0.22,
       1.199,
-      i === 0 ? pinkGlow : 0x747289,
+      i === 0 ? rubyGlow : 0x666479,
       projectsGroup,
     );
-  box(0.16, 0.035, 0.015, 3.86, 1.04, 1.203, 0x111729, projectsGroup);
-  rounded(0.82, 0.29, 0.035, 3.25, 0.6, 1.195, 0x11192e, 0.03, projectsGroup);
+  box(0.16, 0.035, 0.015, 3.86, 1.04, 1.203, 0x0f1424, projectsGroup);
+  rounded(0.82, 0.29, 0.035, 3.25, 0.6, 1.195, 0x0e1526, 0.03, projectsGroup);
   label(
-    "PICK A PROJECT",
+    "TANLANG / SELECT",
     0.77,
     0.15,
     3.25,
     0.61,
     1.22,
-    { size: 62, color: "#ad80ad" },
+    { size: 58, color: "#95d5cb" },
     projectsGroup,
   );
-  label(
-    "01—04",
-    0.22,
-    0.5,
-    4.077,
-    1.86,
-    0.6,
-    { size: 85, color: "#b784b3" },
-    projectsGroup,
-  ).rotation.y = Math.PI / 2;
 
-  // A payphone doubles as the contact portal.
-  cylinder(0.07, 1.3, -3.45, 0.9, 1.8, 0x4e4554, contactGroup);
-  rounded(0.85, 1.18, 0.58, -3.45, 1.94, 1.8, 0xa0714a, 0.07, contactGroup);
-  rounded(0.7, 0.93, 0.03, -3.45, 1.98, 2.106, 0x1d293e, 0.03, contactGroup);
+  // Retro Cyber Payphone / Hotline
+  const payphoneGroup = new THREE.Group();
+  payphoneGroup.userData.interactive = "phone";
+  contactGroup.add(payphoneGroup);
+
+  cylinder(0.07, 1.3, -3.45, 0.9, 1.8, 0x423a48, payphoneGroup);
+  rounded(0.85, 1.18, 0.58, -3.45, 1.94, 1.8, 0x8a5e3c, 0.07, payphoneGroup);
+  rounded(0.7, 0.93, 0.03, -3.45, 1.98, 2.106, 0x182234, 0.03, payphoneGroup);
   label(
-    ["SAY", "HELLO."],
+    ["ALOQA", "HOTLINE"],
     0.54,
     0.46,
     -3.45,
     2.12,
     2.133,
-    { size: 90, height: 420, color: "#90ffe9" },
-    contactGroup,
+    { size: 85, height: 420, color: "#80ffe8" },
+    payphoneGroup,
   );
   for (let i = 0; i < 9; i++)
     box(
@@ -792,8 +993,8 @@ export async function createWorkshop(host, options) {
       -3.56 + (i % 3) * 0.11,
       1.91 - Math.floor(i / 3) * 0.075,
       2.145,
-      0x7397a4,
-      contactGroup,
+      0x638491,
+      payphoneGroup,
     );
   pipe(
     [
@@ -802,109 +1003,121 @@ export async function createWorkshop(host, options) {
       [-3.8, 1.69, 2.18],
     ],
     0.05,
-    0x536478,
-    contactGroup,
-  );
-  pipe(
-    [
-      [-3.81, 1.69, 2.18],
-      [-3.87, 1.37, 2.16],
-      [-3.58, 1.26, 2.13],
-      [-3.5, 1.64, 2.13],
-    ],
-    0.013,
-    0x303448,
-    contactGroup,
+    0x455364,
+    payphoneGroup,
   );
   label(
-    "THE HOTLINE",
+    "THE HOTLINE ✦",
     0.88,
     0.19,
     -3.45,
     2.66,
     1.82,
-    { size: 87, color: "#ffc178" },
-    contactGroup,
+    { size: 82, color: "#ffc178" },
+    payphoneGroup,
   );
-  // Physical signpost, stools, utility pole, and little workshop life.
-  cylinder(0.045, 3.5, -4.07, 1.99, 2.72, 0x566076);
+
+  // Physical Signpost with Central Asian Bilingual Phrasing
+  cylinder(0.045, 3.5, -4.07, 1.99, 2.72, 0x4a5367);
   const signBoards = [
-    ["PROJECTS →", 2.85, 0x28616a, "#80fff1", "projects"],
-    ["← ABOUT ME", 2.39, 0x6a355d, "#ffa5e1", "about"],
-    ["SAY HELLO ↗", 1.93, 0x826240, "#ffdd95", "contact"],
+    ["LOYIHALAR · PROJECTS →", 2.85, 0x184282, "#80fff1", "projects"],
+    ["← DASTURCHI · ABOUT", 2.39, 0x6e2c4c, "#ffa5e1", "about"],
+    ["ALOQA · HOTLINE ↗", 1.93, 0x7a5a38, "#ffdd95", "contact"],
   ];
   for (const [text, y, color, ink, id] of signBoards) {
     const g = new THREE.Group();
     g.userData.section = id;
     root.add(g);
-    rounded(1.72, 0.35, 0.1, -4.07, y, 2.87, color, 0.025, g);
-    label(text, 1.53, 0.25, -4.07, y, 2.934, { size: 83, color: ink }, g);
+    rounded(1.85, 0.35, 0.1, -4.07, y, 2.87, color, 0.025, g);
+    label(text, 1.65, 0.25, -4.07, y, 2.934, { size: 76, color: ink }, g);
   }
+
   for (const x of [-1.55, 0, 1.55]) {
-    cylinder(0.29, 0.13, x, 0.93, 2.53, 0x884c61);
-    cylinder(0.25, 0.035, x, 1.012, 2.53, 0xb2677d);
+    cylinder(0.29, 0.13, x, 0.93, 2.53, 0x764254);
+    cylinder(0.25, 0.035, x, 1.012, 2.53, 0x9c596d);
     for (const dx of [-0.17, 0.17])
       for (const dz of [-0.14, 0.14])
         bar(
           [x + dx, 0.29, 2.53 + dz],
           [x + dx * 0.8, 0.87, 2.53 + dz * 0.8],
           0.025,
-          0x4b5065,
+          0x404456,
         );
     const footRing = new THREE.Mesh(
       new THREE.TorusGeometry(0.2, 0.018, 6, 20),
-      mat(0x646b7b),
+      mat(0x565c6c),
     );
     footRing.rotation.x = Math.PI / 2;
     footRing.position.set(x, 0.48, 2.53);
     root.add(footRing);
   }
-  // Paper lanterns: warm islands in the cyan and magenta light.
-  function lantern(x, y, z) {
-    bar([x, y + 0.7, z], [x, y + 0.38, z], 0.012, 0x6c5663);
-    const lamp = sphere(0.32, x, y, z, glow(0xffa16b));
-    lamp.scale.y = 1.15;
-    for (let i = 0; i < 7; i++) {
-      const yy = (i - 3) * 0.08;
-      const rr = Math.sqrt(Math.max(0.015, 0.32 * 0.32 - yy * yy));
-      const hoop = new THREE.Mesh(
-        new THREE.TorusGeometry(rr, 0.007, 5, 28),
-        mat(0x9d5b4b),
-      );
-      hoop.rotation.x = Math.PI / 2;
-      hoop.position.set(x, y + yy * 1.12, z);
-      root.add(hoop);
+
+  // Uzbek Oriental Brass & Turquoise Fanoos Lanterns (Central Asian Filigree)
+  function uzbekLantern(x, y, z) {
+    const lanternGroup = new THREE.Group();
+    lanternGroup.position.set(x, y, z);
+    root.add(lanternGroup);
+
+    bar([x, y + 0.82, z], [x, y + 0.4, z], 0.012, 0xb88835);
+    cylinder(0.18, 0.1, x, y + 0.36, z, 0xb88835, root, 0.05);
+    sphere(0.035, x, y + 0.42, z, glow(GOLD), root);
+
+    // Glowing turquoise and amber filigree lantern core
+    cylinder(0.24, 0.46, x, y + 0.12, z, glow(TURQUOISE), root, 0.2);
+
+    for (let i = 0; i < 8; i++) {
+      const a = (i * Math.PI) / 4;
+      const rx = Math.cos(a) * 0.23, rz = Math.sin(a) * 0.23;
+      bar([x + rx, y + 0.34, z + rz], [x + rx, y - 0.11, z + rz], 0.012, 0xb88835, root);
     }
-    cylinder(0.12, 0.065, x, y + 0.36, z, 0x493443);
-    cylinder(0.1, 0.08, x, y - 0.37, z, 0x493443);
-    label("夜", 0.25, 0.28, x, y, z + 0.325, {
-      size: 170,
+    cylinder(0.22, 0.06, x, y - 0.13, z, 0xb88835, root, 0.14);
+    sphere(0.045, x, y - 0.18, z, glow(GOLD), root);
+
+    // Central Asian 8-pointed star medallion (✦)
+    label(["✦", "TOSHKENT"], 0.34, 0.32, x, y + 0.12, z + 0.245, {
+      size: 110,
       width: 256,
       height: 256,
-      color: "#8e3e47",
-      font: "600",
+      color: "#00e5d0",
+      font: "700",
     });
+
+    const lanternLight = new THREE.PointLight(TURQUOISE, 4.5, 4.5, 2);
+    lanternLight.position.set(x, y + 0.12, z);
+    scene.add(lanternLight);
   }
-  lantern(-2.72, 2.78, 1.88);
-  lantern(2.72, 3.35, 1.68);
-  // Robot caretaker, including an animated head and antenna light.
+  uzbekLantern(-2.72, 2.78, 1.88);
+  uzbekLantern(2.72, 3.35, 1.68);
+
+  // Robot Caretaker (EL-01) with Uzbek Stylized Do'ppi Cap
   const robot = new THREE.Group();
   robot.position.set(3.75, 0.24, 2.57);
   robot.rotation.y = -0.25;
-  robot.userData.section = "about";
+  robot.userData.interactive = "robot";
   root.add(robot);
-  rounded(0.55, 0.48, 0.38, 0, 0.4, 0, 0x798ba3, 0.07, robot);
-  rounded(0.66, 0.43, 0.42, 0, 0.92, 0.02, 0x9fa8bb, 0.08, robot);
-  rounded(0.5, 0.25, 0.035, 0, 0.94, 0.244, 0x101b31, 0.055, robot);
+
+  rounded(0.55, 0.48, 0.38, 0, 0.4, 0, 0x687890, 0.07, robot);
+  rounded(0.66, 0.43, 0.42, 0, 0.92, 0.02, 0x8c96aa, 0.08, robot);
+  rounded(0.5, 0.25, 0.035, 0, 0.94, 0.244, 0x0f182c, 0.055, robot);
+
+  // Stylized Central Asian square embroidered Do'ppi cap on EL-01
+  rounded(0.44, 0.12, 0.4, 0, 1.18, 0.02, 0x143f7a, 0.03, robot);
+  frame(0.46, 0.13, 0, 1.18, 0.02, glow(TURQUOISE), robot, 0.008);
+
   box(0.105, 0.07, 0.012, -0.13, 0.96, 0.269, cyanGlow, robot);
   box(0.105, 0.07, 0.012, 0.13, 0.96, 0.269, cyanGlow, robot);
-  bar([0, 1.14, 0.02], [0, 1.36, 0.02], 0.016, 0x8f92a9, robot);
-  sphere(0.05, 0, 1.37, 0.02, pinkGlow, robot);
+  bar([0, 1.14, 0.02], [0, 1.36, 0.02], 0.016, 0x7c7f96, robot);
+  const robotAntenna = sphere(0.05, 0, 1.37, 0.02, rubyGlow, robot);
   for (const x of [-0.19, 0.19])
-    rounded(0.22, 0.12, 0.3, x, 0.1, 0.08, 0x4f647e, 0.035, robot);
-  bar([-0.31, 0.58, 0], [-0.43, 0.3, 0.1], 0.05, 0x66758e, robot);
-  bar([0.31, 0.57, 0], [0.48, 0.78, 0.08], 0.05, 0x66758e, robot);
-  sphere(0.065, 0.48, 0.82, 0.08, 0xa2b5c5, robot);
+    rounded(0.22, 0.12, 0.3, x, 0.1, 0.08, 0x43566f, 0.035, robot);
+
+  const robotLeftArm = bar([-0.31, 0.58, 0], [-0.43, 0.3, 0.1], 0.05, 0x56647c, robot);
+  const robotRightArmGroup = new THREE.Group();
+  robotRightArmGroup.position.set(0.31, 0.57, 0);
+  robot.add(robotRightArmGroup);
+  bar([0, 0, 0], [0.17, 0.21, 0.08], 0.05, 0x56647c, robotRightArmGroup);
+  sphere(0.065, 0.17, 0.25, 0.08, 0x90a3b3, robotRightArmGroup);
+
   label(
     "EL-01",
     0.3,
@@ -912,45 +1125,19 @@ export async function createWorkshop(host, options) {
     0,
     0.43,
     0.2,
-    { size: 84, color: "#172336" },
+    { size: 84, color: "#141e2e" },
     robot,
   );
-  // Shipping crates and a hardy little plant beside the booth.
-  for (let i = 0; i < 2; i++) {
-    box(0.62, 0.45, 0.57, -3.1, 0.47 + i * 0.45, -0.8, 0x66505d);
-    frame(
-      0.54,
-      0.34,
-      -3.1,
-      0.47 + i * 0.45,
-      -0.507,
-      mat(0x9a6e69),
-      root,
-      0.012,
-    );
-  }
-  cylinder(0.23, 0.35, -2.95, 0.42, 2.85, 0x735460, root, 0.17);
-  for (let i = 0; i < 8; i++) {
-    const a = (i * Math.PI) / 4;
-    const leaf = sphere(
-      0.13,
-      -2.95 + Math.cos(a) * 0.16,
-      0.78,
-      2.85 + Math.sin(a) * 0.16,
-      0x357c79,
-    );
-    leaf.scale.set(0.45, 2.2, 0.7);
-    leaf.rotation.set(Math.cos(a) * 0.8, 0, Math.sin(a) * 0.8);
-  }
-  // Exterior conduit and overhead electrical lines.
+
+  // Exterior conduit and illuminated OCHIQ / OPEN sign
   for (const [x, z, h] of [
     [-3.3, -1.6, 6.4],
     [4.35, -1.5, 6.65],
   ]) {
-    cylinder(0.07, h, x, h / 2 + 0.25, z, 0x3c4059);
-    bar([x - 0.55, h - 0.15, z], [x + 0.55, h - 0.15, z], 0.035, 0x655a76);
+    cylinder(0.07, h, x, h / 2 + 0.25, z, 0x34384d);
+    bar([x - 0.55, h - 0.15, z], [x + 0.55, h - 0.15, z], 0.035, 0x564c67);
     for (const dx of [-0.42, 0, 0.42])
-      cylinder(0.04, 0.17, x + dx, h - 0.02, z, 0x8c7a8c);
+      cylinder(0.04, 0.17, x + dx, h - 0.02, z, 0x796979);
   }
   for (let i = 0; i < 3; i++) {
     pipe(
@@ -960,7 +1147,7 @@ export async function createWorkshop(host, options) {
         [3.93 + i * 0.42, 6.56, -1.5],
       ],
       0.012,
-      0x36354d,
+      0x2e2d42,
     );
   }
   pipe(
@@ -970,48 +1157,51 @@ export async function createWorkshop(host, options) {
       [-2.6, 3.5, 0.5],
     ],
     0.017,
-    0x282c44,
+    0x22263a,
   );
-  bar([4.35, 5.8, -1.5], [4.35, 5.8, 0.2], 0.045, 0x4f536d);
-  box(0.5, 0.08, 0.43, 4.35, 5.76, 0.25, 0x4e5064);
+  bar([4.35, 5.8, -1.5], [4.35, 5.8, 0.2], 0.045, 0x43465e);
+  box(0.5, 0.08, 0.43, 4.35, 5.76, 0.25, 0x434557);
   box(0.43, 0.02, 0.34, 4.35, 5.7, 0.25, goldGlow);
+
+  // OCHIQ / OPEN sign
   const openSign = new THREE.Group();
   openSign.position.set(-2.69, 2.63, 0.24);
   openSign.rotation.y = -Math.PI / 2;
   root.add(openSign);
-  rounded(0.68, 1.49, 0.1, 0, 0, 0, 0x203249, 0.03, openSign);
+  rounded(0.68, 1.49, 0.1, 0, 0, 0, 0x1b2b3f, 0.03, openSign);
   frame(0.58, 1.37, 0, 0, 0.065, cyanGlow, openSign, 0.012);
   label(
-    ["O", "P", "E", "N"],
+    ["O", "C", "H", "I", "Q"],
     0.38,
     1.16,
     0,
     0,
     0.08,
-    { size: 84, width: 256, height: 1024, color: "#8effed" },
+    { size: 84, width: 256, height: 1024, color: "#80ffe8" },
     openSign,
   );
 
-  // Lighting is deliberately local: an amber interior and two neon washes.
-  scene.add(new THREE.HemisphereLight(0x88a6e5, 0x29213d, 1.05));
-  const moon = new THREE.DirectionalLight(0x839edc, 1.2);
-  moon.position.set(-5, 10, 6);
+  // Lighting with Samarkand turquoise, cobalt, and saffron ambient fills
+  scene.add(new THREE.HemisphereLight(0x7da4e8, 0x221a34, 1.15));
+  const moon = new THREE.DirectionalLight(0x7896db, 1.25);
+  moon.position.set(-5, 12, 7);
   scene.add(moon);
+
   function light(color, intensity, distance, x, y, z) {
     const l = new THREE.PointLight(color, intensity, distance, 2);
     l.position.set(x, y, z);
     scene.add(l);
     return l;
   }
-  light(CYAN, 12, 12, -1, 3.4, 2.1);
-  light(PINK, 16, 11, 3.7, 3.5, 2.1);
-  light(0xffba82, 9, 7, 0, 2.7, 0.5);
-  light(0xffa96d, 4, 5, -2.8, 2.6, 2.1);
+  light(TURQUOISE, 13, 13, -1, 3.4, 2.1);
+  light(RUBY, 14, 11, 3.7, 3.5, 2.1);
+  light(GOLD, 10, 8, 0, 2.7, 0.5);
+  light(0xff9a55, 4, 5, -2.8, 2.6, 2.1);
 
-  // Fine rain streaks; no images, tracking, or external asset services.
+  // Fine rain streaks
   const rainPositions = [],
     rainEnds = [];
-  for (let i = 0; i < (mobile() ? 200 : 420); i++) {
+  for (let i = 0; i < (mobile() ? 180 : 380); i++) {
     const x = (random() - 0.5) * 24,
       z = (random() - 0.5) * 20,
       y = random() * 15;
@@ -1036,20 +1226,21 @@ export async function createWorkshop(host, options) {
     vertexShader:
       "uniform float uTime; attribute float aEnd; varying float vFade; void main(){vec3 p=position;p.y=mod(p.y-uTime*4.0,15.0)+aEnd*.16;p.x-=p.y*.035;vFade=1.0-smoothstep(7.0,15.0,p.y);gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0);}",
     fragmentShader:
-      "varying float vFade;void main(){gl_FragColor=vec4(.36,.55,.76,.11*vFade);}",
+      "varying float vFade;void main(){gl_FragColor=vec4(.3,.6,.85,.12*vFade);}",
   });
   const rain = new THREE.LineSegments(rainGeometry, rainMaterial);
   scene.add(rain);
-  // Floating atmospheric dust / cyber spark motes
-  const particleCount = mobile() ? 110 : 240;
+
+  // Atmospheric dust / cyber spark particles
+  const particleCount = mobile() ? 120 : 250;
   const particleGeo = new THREE.BufferGeometry();
   const pPositions = new Float32Array(particleCount * 3);
   const pColors = new Float32Array(particleCount * 3);
   const pBaseY = new Float32Array(particleCount);
   const pSpeeds = new Float32Array(particleCount);
 
-  const colCyan = new THREE.Color(CYAN);
-  const colPink = new THREE.Color(PINK);
+  const colTurquoise = new THREE.Color(TURQUOISE);
+  const colRuby = new THREE.Color(RUBY);
   const colGold = new THREE.Color(GOLD);
 
   for (let i = 0; i < particleCount; i++) {
@@ -1059,7 +1250,7 @@ export async function createWorkshop(host, options) {
     pBaseY[i] = py;
     pPositions[i * 3 + 2] = (random() - 0.5) * 9;
 
-    const col = i % 3 === 0 ? colCyan : i % 3 === 1 ? colPink : colGold;
+    const col = i % 3 === 0 ? colTurquoise : i % 3 === 1 ? colRuby : colGold;
     pColors[i * 3 + 0] = col.r;
     pColors[i * 3 + 1] = col.g;
     pColors[i * 3 + 2] = col.b;
@@ -1099,24 +1290,25 @@ export async function createWorkshop(host, options) {
     root.add(ring);
     return ring;
   }
-  const holoProjects = createHoloRing(3.34, 0.28, 1.15, CYAN, 0.65);
-  const holoAbout = createHoloRing(-0.4, 0.28, 1.35, PINK, 0.75);
+  const holoProjects = createHoloRing(3.34, 0.28, 1.15, TURQUOISE, 0.65);
+  const holoAbout = createHoloRing(-0.4, 0.28, 1.35, RUBY, 0.75);
   const holoHonors = createHoloRing(-0.4, 4.45, 0.05, GOLD, 0.55);
-  const holoContact = createHoloRing(-3.45, 0.28, 1.9, CYAN, 0.58);
+  const holoContact = createHoloRing(-3.45, 0.28, 1.9, TURQUOISE, 0.58);
 
   // Cinematic Camera Splines (POV on Scroll)
-  // 0.00: Home (Wide diorama establishing shot)
-  // 0.25: Projects (Vending machine terminal close-up)
-  // 0.50: About (Workbench & dual screen command desk)
-  // 0.75: Honors (Rooftop golden star trophy & antenna)
-  // 1.00: Contact (Hotline payphone booth & signboards)
+  // Perfectly tuned distances with 11-17 units clearance: ZERO clipping through marquee or walls!
+  // 0.00: Home (Wide establishing shot with diorama in full view)
+  // 0.25: Projects (Comfortable angle framing the vending machine on the right)
+  // 0.50: About (Looking through window into workshop desk, tea set, and robot)
+  // 0.75: Honors (High rooftop angle, looking over marquee down at the 8-pointed star trophy)
+  // 1.00: Contact (Angled view of payphone booth and street signpost)
   const cameraCurve = new THREE.CatmullRomCurve3(
     [
-      v3(11.2, 7.2, 14.5), // Station 0: Home
-      v3(6.2, 3.4, 5.2),   // Station 1: Projects
-      v3(-0.25, 2.32, 3.1),// Station 2: About
-      v3(1.8, 5.6, 6.2),   // Station 3: Honors
-      v3(-5.2, 3.1, 5.2),  // Station 4: Contact
+      v3(14.2, 8.5, 17.2), // Station 0: Home
+      v3(10.2, 5.8, 13.0),  // Station 1: Projects
+      v3(3.5, 4.2, 10.5),   // Station 2: About
+      v3(6.8, 9.8, 14.5),  // Station 3: Honors (High over roof, NO clipping!)
+      v3(-9.5, 5.2, 13.2), // Station 4: Contact
     ],
     false,
     "catmullrom",
@@ -1125,11 +1317,11 @@ export async function createWorkshop(host, options) {
 
   const targetCurve = new THREE.CatmullRomCurve3(
     [
-      v3(0, 2.2, 0),        // Station 0: Home
-      v3(3.34, 1.6, 0.85),  // Station 1: Projects
-      v3(-0.45, 2.15, 0.7), // Station 2: About
-      v3(-0.4, 4.75, 0.0),  // Station 3: Honors
-      v3(-3.45, 1.95, 1.8), // Station 4: Contact
+      v3(0, 2.3, 0),       // Station 0: Home
+      v3(2.5, 2.0, 0.8),   // Station 1: Projects
+      v3(-0.6, 2.2, 0.8),  // Station 2: About
+      v3(-0.3, 4.8, -0.3), // Station 3: Honors (Rooftop 8-pointed star trophy)
+      v3(-2.8, 2.1, 1.4),  // Station 4: Contact (Payphone & signpost)
     ],
     false,
     "catmullrom",
@@ -1146,13 +1338,62 @@ export async function createWorkshop(host, options) {
     targetScrollProgress = 0,
     isFreeOrbit = false;
 
+  // Interactive animation states
+  let robotWave = 0;
+  let choynakSteamTimer = 0;
+  let trophySpinBonus = 0;
+
+  function triggerInteractiveAction(type) {
+    if (type === "robot") {
+      robotWave = 1.8;
+      robotAntenna.material.color.setHex(GOLD);
+      setTimeout(() => robotAntenna.material.color.setHex(RUBY), 1200);
+    } else if (type === "choynak") {
+      choynakSteamTimer = 2.5;
+    } else if (type === "monitor") {
+      currentShaderMode = (currentShaderMode + 1) % 3;
+      cyberScreenShader.uniforms.uMode.value = currentShaderMode;
+    } else if (type === "trophy") {
+      trophySpinBonus = 20.0;
+    }
+    dirty = true;
+    schedule();
+  }
+
   const pointer = new THREE.Vector2(0, 0);
   window.addEventListener("pointermove", (e) => {
     pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
     pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
     dirty = true;
     schedule();
+
+    // Hover detection on 3D objects
+    if (!isFreeOrbit) {
+      checkHover(pointer);
+    }
   });
+
+  const raycaster = new THREE.Raycaster();
+  let currentHovered = null;
+
+  function checkHover(pointerCoords) {
+    raycaster.setFromCamera(pointerCoords, camera);
+    const hits = raycaster.intersectObjects(root.children, true);
+    let found = null;
+    for (const hit of hits) {
+      let o = hit.object;
+      while (o && !o.userData.interactive && !o.userData.section) o = o.parent;
+      if (o?.userData.interactive) {
+        found = o.userData.interactive;
+        break;
+      }
+    }
+    if (found !== currentHovered) {
+      currentHovered = found;
+      renderer.domElement.style.cursor = found ? "pointer" : "default";
+      if (options.onHover) options.onHover(found);
+    }
+  }
 
   const originalReflect = floor.onBeforeRender;
   floor.onBeforeRender = function (...args) {
@@ -1171,7 +1412,7 @@ export async function createWorkshop(host, options) {
     const dt = lastFrame ? Math.min((now - lastFrame) / 1000, 0.08) : 0;
     lastFrame = now;
 
-    // Smooth scroll camera interpolation
+    // Smooth scroll camera interpolation along the spline
     if (motion) {
       scrollProgress += (targetScrollProgress - scrollProgress) * 0.085;
     } else {
@@ -1188,8 +1429,8 @@ export async function createWorkshop(host, options) {
 
       if (mobile()) {
         const diff = baseCamPos.clone().sub(baseTarget);
-        diff.multiplyScalar(1.22);
-        diff.y += 0.55;
+        diff.multiplyScalar(1.35);
+        diff.y += 1.2;
         baseCamPos.copy(baseTarget).add(diff);
       }
 
@@ -1206,8 +1447,25 @@ export async function createWorkshop(host, options) {
     if (motion) {
       time += dt;
       fanBlades.rotation.z += dt * 2.2;
-      robot.rotation.y = -0.25 + Math.sin(time * 0.8) * 0.12;
-      star.rotation.y = Math.sin(time * 0.6) * 0.25;
+
+      // Robot Caretaker Animation & Wave Interaction
+      if (robotWave > 0) {
+        robotWave -= dt;
+        robotRightArmGroup.rotation.z = Math.sin(time * 12.0) * 0.45 + 0.3;
+        robot.rotation.y = -0.25 + Math.sin(time * 6.0) * 0.25;
+      } else {
+        robotRightArmGroup.rotation.z = 0;
+        robot.rotation.y = -0.25 + Math.sin(time * 0.8) * 0.12;
+      }
+
+      // 8-Pointed Star Trophy Spin & Bonus Spin on Click
+      if (trophySpinBonus > 0) {
+        trophySpinBonus = Math.max(0, trophySpinBonus - dt * 8.0);
+        star.rotation.y += dt * (2.0 + trophySpinBonus);
+      } else {
+        star.rotation.y = Math.sin(time * 0.6) * 0.25;
+      }
+
       rainMaterial.uniforms.uTime.value = time;
       floor.material.uniforms.uTime.value = time;
       cyberScreenShader.uniforms.uTime.value = time;
@@ -1219,6 +1477,20 @@ export async function createWorkshop(host, options) {
         pArr[i * 3 + 0] += Math.cos(time * 0.3 * pSpeeds[i] + i) * 0.001;
       }
       dustParticles.geometry.attributes.position.needsUpdate = true;
+
+      // Tea steam particles rising
+      const sArr = teaSteam.geometry.attributes.position.array;
+      const steamSpeed = choynakSteamTimer > 0 ? 1.4 : 0.55;
+      if (choynakSteamTimer > 0) choynakSteamTimer -= dt;
+
+      for (let i = 0; i < steamCount; i++) {
+        steamLifes[i] += dt * steamSpeed;
+        if (steamLifes[i] > 1.0) steamLifes[i] = 0;
+        sArr[i * 3 + 1] = 1.95 + steamLifes[i] * 0.55;
+        sArr[i * 3 + 0] = 1.85 + Math.sin(time * 2.5 + i) * 0.05;
+      }
+      teaSteam.geometry.attributes.position.needsUpdate = true;
+      teaSteam.material.opacity = choynakSteamTimer > 0 ? 0.75 : 0.4;
 
       // Holographic station ring pulses
       holoProjects.rotation.z += dt * 0.4;
@@ -1235,7 +1507,14 @@ export async function createWorkshop(host, options) {
     frameCount++;
     composer.render();
     dirty = false;
-    if (motion || Math.abs(targetScrollProgress - scrollProgress) > 0.0003 || controls.enableDamping) {
+    if (
+      motion ||
+      Math.abs(targetScrollProgress - scrollProgress) > 0.0003 ||
+      controls.enableDamping ||
+      robotWave > 0 ||
+      trophySpinBonus > 0 ||
+      choynakSteamTimer > 0
+    ) {
       schedule();
     }
   }
@@ -1270,8 +1549,7 @@ export async function createWorkshop(host, options) {
     } else schedule();
   });
 
-  // 3D Click Interaction to fly to stations
-  const raycaster = new THREE.Raycaster();
+  // 3D Click Interaction to Trigger Actions & Fly to Stations
   let down = null;
   renderer.domElement.addEventListener("pointerdown", (event) => {
     down = { x: event.clientX, y: event.clientY };
@@ -1293,8 +1571,12 @@ export async function createWorkshop(host, options) {
     const hits = raycaster.intersectObjects(root.children, true);
     for (const hit of hits) {
       let o = hit.object;
-      while (o && !o.userData.section) o = o.parent;
-      if (o?.userData.section && options.onSelect) {
+      while (o && !o.userData.interactive && !o.userData.section) o = o.parent;
+      if (o?.userData.interactive) {
+        triggerInteractiveAction(o.userData.interactive);
+        if (options.onInteract) options.onInteract(o.userData.interactive);
+        break;
+      } else if (o?.userData.section && options.onSelect) {
         options.onSelect(o.userData.section);
         break;
       }
@@ -1339,6 +1621,9 @@ export async function createWorkshop(host, options) {
       dirty = true;
       schedule();
       return isFreeOrbit;
+    },
+    interact(type) {
+      triggerInteractiveAction(type);
     },
     reset() {
       targetScrollProgress = 0;

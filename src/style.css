@@ -10,20 +10,23 @@
 
 :root {
   font-family: "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: #070b18;
+  background: #060a16;
   color: #eeeffa;
   font-synthesis: none;
-  --cyan: #69f5ed;
-  --cyan-glow: #69f5ed55;
-  --pink: #ff62c8;
-  --pink-glow: #ff62c855;
-  --gold: #ffb352;
-  --gold-glow: #ffb35255;
-  --muted: #949ab0;
+  --turquoise: #00e5d0;
+  --turquoise-glow: rgba(0, 229, 208, 0.4);
+  --cobalt: #184282;
+  --gold: #ffc444;
+  --gold-glow: rgba(255, 196, 68, 0.45);
+  --ruby: #e6286b;
+  --ruby-glow: rgba(230, 40, 107, 0.45);
+  --cyan: #00e5d0;
+  --pink: #e6286b;
+  --muted: #959cb4;
   --mono: "IBM Plex Mono", monospace;
-  --line: rgba(255, 255, 255, 0.08);
-  --card-bg: rgba(11, 16, 32, 0.82);
-  --card-border: rgba(105, 245, 237, 0.18);
+  --line: rgba(255, 255, 255, 0.1);
+  --liquid-glass-bg: linear-gradient(135deg, rgba(16, 26, 50, 0.72) 0%, rgba(7, 12, 26, 0.85) 100%);
+  --liquid-glass-border: rgba(255, 255, 255, 0.22);
 }
 
 * {
@@ -36,7 +39,7 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #070b18;
+  background: #060a16;
 }
 
 button, a {
@@ -54,16 +57,16 @@ button {
 }
 
 button:focus-visible, a:focus-visible {
-  outline: 2px solid var(--cyan);
+  outline: 2px solid var(--turquoise);
   outline-offset: 4px;
 }
 
 ::selection {
-  background: var(--pink);
-  color: #070b18;
+  background: var(--ruby);
+  color: #060a16;
 }
 
-/* Master container */
+/* Master viewport */
 #main {
   position: relative;
   width: 100%;
@@ -92,15 +95,15 @@ button:focus-visible, a:focus-visible {
   opacity: 1;
 }
 
-/* Overlays */
+/* Cinematic Post Vignette & Film Grain */
 .vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background: radial-gradient(
     ellipse at 50% 50%,
-    transparent 40%,
-    rgba(5, 7, 19, 0.82) 100%
+    transparent 42%,
+    rgba(4, 6, 16, 0.82) 100%
   );
   z-index: 2;
 }
@@ -142,16 +145,16 @@ button:focus-visible, a:focus-visible {
 .brand-icon {
   width: 38px;
   height: 38px;
-  border: 1px solid var(--cyan-glow);
+  border: 1px solid rgba(0, 229, 208, 0.4);
   display: grid;
   place-items: center;
-  border-radius: 9px;
-  background: rgba(12, 25, 36, 0.8);
-  color: var(--cyan);
+  border-radius: 10px;
+  background: rgba(10, 24, 38, 0.85);
+  color: var(--turquoise);
   font-size: 24px;
   font-weight: 650;
   letter-spacing: -2px;
-  box-shadow: 0 0 25px rgba(105, 245, 237, 0.15);
+  box-shadow: 0 0 25px rgba(0, 229, 208, 0.2);
   position: relative;
 }
 
@@ -165,14 +168,14 @@ button:focus-visible, a:focus-visible {
 .brand > span:last-child {
   font: 8px/1.8 var(--mono);
   letter-spacing: 1.5px;
-  color: #9ba1b5;
+  color: #9ba2b8;
 }
 
 .brand > span:last-child > span {
   display: block;
   font: 600 15px "Inter Tight", sans-serif;
   letter-spacing: 1px;
-  color: #f2f3f9;
+  color: #f2f4fc;
 }
 
 .header-right {
@@ -183,7 +186,7 @@ button:focus-visible, a:focus-visible {
 
 .time-display {
   font: 8px var(--mono);
-  color: #9ba1b5;
+  color: #9ba2b8;
   letter-spacing: 0.5px;
   margin-right: 12px;
   display: flex;
@@ -196,8 +199,8 @@ button:focus-visible, a:focus-visible {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--cyan);
-  box-shadow: 0 0 10px var(--cyan);
+  background: var(--turquoise);
+  box-shadow: 0 0 10px var(--turquoise);
   display: inline-block;
   animation: pulse 2s infinite ease-in-out;
 }
@@ -207,25 +210,33 @@ button:focus-visible, a:focus-visible {
   50% { opacity: 0.5; transform: scale(0.85); }
 }
 
+/* Liquid Glass Icon Buttons */
 .icon-button {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(15, 20, 36, 0.7);
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--liquid-glass-border);
+  background: var(--liquid-glass-bg);
   border-radius: 50%;
   font-size: 13px;
   transition: all 0.25s ease;
-  backdrop-filter: blur(12px);
-  color: #cdd3e8;
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  color: #d1d7ee;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.35);
 }
 
 .icon-button:hover, .icon-button.active {
-  background: rgba(35, 45, 75, 0.9);
-  border-color: var(--cyan);
-  color: var(--cyan);
-  box-shadow: 0 0 15px var(--cyan-glow);
+  background: rgba(30, 48, 80, 0.95);
+  border-color: var(--turquoise);
+  color: var(--turquoise);
+  box-shadow:
+    0 0 20px var(--turquoise-glow),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
 }
 
 .sound-icon {
@@ -247,7 +258,7 @@ button:focus-visible, a:focus-visible {
 .sound-icon > i:nth-child(4) { height: 6px; }
 
 #sound-toggle[aria-pressed="true"] .sound-icon > i {
-  background: var(--cyan);
+  background: var(--turquoise);
   animation: soundBars 0.8s ease-in-out infinite alternate;
 }
 #sound-toggle[aria-pressed="true"] .sound-icon > i:nth-child(2n) {
@@ -270,7 +281,7 @@ button:focus-visible, a:focus-visible {
   scroll-behavior: smooth;
   scroll-snap-type: y proximity;
   scrollbar-width: thin;
-  scrollbar-color: rgba(105, 245, 237, 0.3) transparent;
+  scrollbar-color: rgba(0, 229, 208, 0.35) transparent;
 }
 
 .scroll-container::-webkit-scrollbar {
@@ -278,55 +289,80 @@ button:focus-visible, a:focus-visible {
 }
 
 .scroll-container::-webkit-scrollbar-thumb {
-  background: rgba(105, 245, 237, 0.25);
+  background: rgba(0, 229, 208, 0.3);
   border-radius: 3px;
 }
 
 .scroll-container::-webkit-scrollbar-thumb:hover {
-  background: var(--cyan);
+  background: var(--turquoise);
 }
 
 .story-section {
   min-height: 100vh;
   display: flex;
   align-items: center;
-  padding: 100px 6vw;
+  padding: 100px 7vw;
   box-sizing: border-box;
   scroll-snap-align: center;
-  pointer-events: none; /* Let canvas capture mouse unless hovering over card */
+  pointer-events: none;
 }
 
-/* Glassmorphic Story Card */
+/* =========================================================
+   AUTHENTIC LIQUID GLASS CARDS
+   ========================================================= */
 .story-card {
   pointer-events: auto;
-  background: var(--card-bg);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--card-border);
-  border-radius: 20px;
-  padding: 34px 38px;
+  background: var(--liquid-glass-bg);
+  backdrop-filter: blur(36px) saturate(210%);
+  -webkit-backdrop-filter: blur(36px) saturate(210%);
+  border: 1px solid var(--liquid-glass-border);
+  border-radius: 24px;
+  padding: 36px 42px;
   box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.65),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 28px 75px rgba(0, 0, 0, 0.72),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.42),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.35),
+    0 0 35px rgba(0, 229, 208, 0.12);
   max-width: 540px;
   width: 100%;
   position: relative;
-  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.35s ease;
+}
+
+/* Liquid specular highlight sweep across top */
+.story-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 35%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.02) 60%,
+    transparent 100%
+  );
+  pointer-events: none;
+  border-radius: 24px 24px 0 0;
 }
 
 .story-card:hover {
-  border-color: rgba(105, 245, 237, 0.4);
+  border-color: rgba(0, 229, 208, 0.5);
   box-shadow:
-    0 28px 70px rgba(0, 0, 0, 0.75),
-    0 0 30px rgba(105, 245, 237, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    0 32px 85px rgba(0, 0, 0, 0.82),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.55),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.35),
+    0 0 45px rgba(0, 229, 208, 0.2);
+  transform: translateY(-3px);
 }
 
 /* Card Typography */
 .card-badge, .eyebrow {
   font: 8px/1.8 var(--mono);
   letter-spacing: 1.5px;
-  color: var(--cyan);
+  color: var(--turquoise);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -339,7 +375,7 @@ button:focus-visible, a:focus-visible {
   line-height: 1.08;
   letter-spacing: -1.2px;
   margin-bottom: 18px;
-  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.85);
 }
 
 .story-card h1 em {
@@ -369,12 +405,12 @@ button:focus-visible, a:focus-visible {
   font-weight: 500;
 }
 
-/* Section Specific Alignments */
+/* Station Placements */
 .station-home {
   justify-content: flex-start;
 }
 .hero-card {
-  max-width: 480px;
+  max-width: 490px;
 }
 
 .hero-actions {
@@ -388,22 +424,26 @@ button:focus-visible, a:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 13px 22px;
-  border: 1px solid var(--cyan-glow);
-  background: rgba(16, 40, 50, 0.8);
-  color: #c5fbf7;
-  border-radius: 8px;
+  padding: 13px 24px;
+  border: 1px solid rgba(0, 229, 208, 0.5);
+  background: linear-gradient(135deg, rgba(0, 229, 208, 0.2) 0%, rgba(16, 45, 60, 0.85) 100%);
+  color: #bbfaf5;
+  border-radius: 10px;
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.5px;
   transition: all 0.25s ease;
-  box-shadow: 0 0 20px rgba(105, 245, 237, 0.12);
+  box-shadow:
+    0 6px 20px rgba(0, 229, 208, 0.18),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4);
 }
 
 .action-btn:hover {
-  background: rgba(25, 65, 80, 0.95);
-  border-color: var(--cyan);
-  box-shadow: 0 0 30px var(--cyan-glow);
+  background: linear-gradient(135deg, rgba(0, 229, 208, 0.35) 0%, rgba(20, 65, 85, 0.95) 100%);
+  border-color: var(--turquoise);
+  box-shadow:
+    0 8px 30px var(--turquoise-glow),
+    inset 0 1px 1px rgba(255, 255, 255, 0.6);
   transform: translateY(-2px);
 }
 
@@ -436,7 +476,7 @@ button:focus-visible, a:focus-visible {
 .mouse-icon i {
   width: 2px;
   height: 5px;
-  background: var(--cyan);
+  background: var(--turquoise);
   border-radius: 1px;
   animation: mouseWheel 1.6s infinite;
 }
@@ -464,20 +504,30 @@ button:focus-visible, a:focus-visible {
   overflow-y: auto;
   padding-right: 6px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(105, 245, 237, 0.2) transparent;
+  scrollbar-color: rgba(0, 229, 208, 0.25) transparent;
 }
 
+/* Liquid Glass Project Box */
 .project-box {
-  background: rgba(18, 25, 46, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 16px 18px;
+  background: rgba(16, 25, 48, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.25);
   transition: all 0.25s ease;
 }
 
 .project-box:hover {
-  background: rgba(22, 33, 62, 0.85);
-  border-color: var(--cyan-glow);
+  background: rgba(22, 36, 68, 0.85);
+  border-color: rgba(0, 229, 208, 0.5);
+  box-shadow:
+    0 12px 35px rgba(0, 0, 0, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    0 0 20px var(--turquoise-glow);
   transform: translateY(-2px);
 }
 
@@ -492,7 +542,7 @@ button:focus-visible, a:focus-visible {
 }
 
 .project-tag {
-  color: var(--pink);
+  color: var(--gold);
 }
 
 .project-box h3 {
@@ -519,29 +569,30 @@ button:focus-visible, a:focus-visible {
   font: 8px var(--mono);
   letter-spacing: 0.5px;
   padding: 6px 12px;
-  border-radius: 5px;
-  background: rgba(105, 245, 237, 0.12);
-  border: 1px solid var(--cyan-glow);
-  color: var(--cyan);
+  border-radius: 6px;
+  background: rgba(0, 229, 208, 0.14);
+  border: 1px solid rgba(0, 229, 208, 0.4);
+  color: var(--turquoise);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
   transition: all 0.2s ease;
 }
 
 .link-chip:hover {
-  background: var(--cyan);
-  color: #070b18;
-  box-shadow: 0 0 15px var(--cyan-glow);
+  background: var(--turquoise);
+  color: #060a16;
+  box-shadow: 0 0 18px var(--turquoise-glow);
 }
 
 .link-chip.secondary {
-  background: rgba(255, 98, 200, 0.1);
-  border-color: var(--pink-glow);
-  color: var(--pink);
+  background: rgba(255, 196, 68, 0.12);
+  border-color: rgba(255, 196, 68, 0.4);
+  color: var(--gold);
 }
 
 .link-chip.secondary:hover {
-  background: var(--pink);
-  color: #070b18;
-  box-shadow: 0 0 15px var(--pink-glow);
+  background: var(--gold);
+  color: #060a16;
+  box-shadow: 0 0 18px var(--gold-glow);
 }
 
 .more-link {
@@ -556,10 +607,10 @@ button:focus-visible, a:focus-visible {
 }
 
 .more-link:hover {
-  color: var(--cyan);
+  color: var(--turquoise);
 }
 
-/* About / Developer Station */
+/* About Station */
 .station-about {
   justify-content: flex-start;
 }
@@ -576,14 +627,14 @@ button:focus-visible, a:focus-visible {
 }
 
 .skill-group {
-  border-left: 2px solid var(--cyan);
+  border-left: 2px solid var(--turquoise);
   padding-left: 14px;
 }
 
 .skill-label {
   font: 7px var(--mono);
   letter-spacing: 1px;
-  color: var(--cyan);
+  color: var(--turquoise);
   display: block;
   margin-bottom: 4px;
 }
@@ -600,24 +651,27 @@ button:focus-visible, a:focus-visible {
   justify-content: space-between;
   align-items: center;
   padding: 14px 18px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(20, 27, 48, 0.5);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(18, 28, 54, 0.6);
   font-size: 12px;
   color: #d1d6ea;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25);
   transition: all 0.25s ease;
   margin-top: 8px;
 }
 
 .collab-box:hover {
-  border-color: var(--pink);
+  border-color: var(--gold);
   color: #fff;
-  background: rgba(35, 30, 55, 0.7);
-  box-shadow: 0 0 20px var(--pink-glow);
+  background: rgba(35, 45, 75, 0.85);
+  box-shadow:
+    0 0 25px var(--gold-glow),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4);
 }
 
 .collab-box b {
-  color: var(--pink);
+  color: var(--gold);
 }
 
 /* Honors Station */
@@ -641,25 +695,31 @@ button:focus-visible, a:focus-visible {
   align-items: center;
   gap: 16px;
   padding: 16px 20px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(18, 25, 46, 0.6);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(16, 25, 48, 0.65);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25);
   transition: all 0.25s ease;
 }
 
 .honor-tile:hover {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
   transform: translateX(4px);
 }
 
 .honor-tile.first-place {
-  border-color: rgba(255, 179, 82, 0.35);
-  background: rgba(30, 26, 40, 0.7);
+  border-color: rgba(255, 196, 68, 0.5);
+  background: linear-gradient(135deg, rgba(35, 30, 20, 0.75) 0%, rgba(20, 25, 45, 0.75) 100%);
+  box-shadow:
+    0 8px 30px rgba(255, 196, 68, 0.15),
+    inset 0 1px 1px rgba(255, 255, 255, 0.35);
 }
 
 .honor-tile.first-place:hover {
   border-color: var(--gold);
-  box-shadow: 0 0 25px var(--gold-glow);
+  box-shadow:
+    0 12px 40px var(--gold-glow),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
 }
 
 .honor-year {
@@ -725,23 +785,26 @@ button:focus-visible, a:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 14px 18px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(18, 25, 46, 0.6);
+  padding: 15px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(16, 26, 48, 0.65);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25);
   transition: all 0.25s ease;
 }
 
 .contact-node:hover {
-  border-color: var(--cyan);
-  background: rgba(22, 38, 56, 0.85);
-  box-shadow: 0 0 20px var(--cyan-glow);
+  border-color: var(--turquoise);
+  background: rgba(20, 38, 62, 0.85);
+  box-shadow:
+    0 0 25px var(--turquoise-glow),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4);
   transform: translateY(-2px);
 }
 
 .contact-node.featured {
-  border-color: var(--cyan-glow);
-  background: rgba(15, 35, 48, 0.7);
+  border-color: rgba(0, 229, 208, 0.4);
+  background: linear-gradient(135deg, rgba(14, 38, 54, 0.75) 0%, rgba(16, 26, 48, 0.75) 100%);
 }
 
 .node-label {
@@ -767,7 +830,7 @@ button:focus-visible, a:focus-visible {
 }
 
 /* =========================================================
-   DOCK NAVIGATION & HUD
+   DOCK NAVIGATION & HUD (LIQUID GLASS)
    ========================================================= */
 .dock {
   position: absolute;
@@ -777,15 +840,16 @@ button:focus-visible, a:focus-visible {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px;
-  background: rgba(13, 18, 36, 0.85);
-  border: 1px solid rgba(185, 195, 245, 0.16);
-  border-radius: 14px;
+  padding: 6px 8px;
+  background: var(--liquid-glass-bg);
+  border: 1px solid var(--liquid-glass-border);
+  border-radius: 18px;
   box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.65),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+    0 16px 45px rgba(0, 0, 0, 0.7),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.4),
+    0 0 30px rgba(0, 229, 208, 0.1);
+  backdrop-filter: blur(36px) saturate(200%);
+  -webkit-backdrop-filter: blur(36px) saturate(200%);
   z-index: 30;
 }
 
@@ -794,7 +858,7 @@ button:focus-visible, a:focus-visible {
   align-items: center;
   gap: 8px;
   padding: 10px 18px;
-  border-radius: 8px;
+  border-radius: 12px;
   color: #9aa1bc;
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -811,20 +875,22 @@ button:focus-visible, a:focus-visible {
 }
 
 .dock button:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
   color: #f2f4ff;
 }
 
 .dock button.active, .dock button[aria-current="page"] {
-  background: rgba(105, 245, 237, 0.14);
-  color: var(--cyan);
-  box-shadow: inset 0 0 0 1px rgba(105, 245, 237, 0.25), 0 0 15px rgba(105, 245, 237, 0.15);
+  background: rgba(0, 229, 208, 0.18);
+  color: var(--turquoise);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 229, 208, 0.4),
+    0 0 20px var(--turquoise-glow);
 }
 
 .dock-divider {
   height: 20px;
   width: 1px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
   margin: 0 4px;
 }
 
@@ -845,7 +911,7 @@ button:focus-visible, a:focus-visible {
 #station-indicator {
   font: 8px var(--mono);
   letter-spacing: 1px;
-  color: var(--cyan);
+  color: var(--turquoise);
   writing-mode: vertical-rl;
   text-orientation: mixed;
 }
@@ -853,7 +919,7 @@ button:focus-visible, a:focus-visible {
 .progress-track {
   width: 2px;
   height: 100px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 2px;
   position: relative;
   overflow: hidden;
@@ -865,9 +931,40 @@ button:focus-visible, a:focus-visible {
   left: 0;
   width: 100%;
   height: 0%;
-  background: var(--cyan);
-  box-shadow: 0 0 8px var(--cyan);
+  background: var(--turquoise);
+  box-shadow: 0 0 10px var(--turquoise);
   transition: height 0.1s linear;
+}
+
+/* Floating 3D Interaction Toast Pill (Liquid Glass) */
+.interact-toast {
+  position: absolute;
+  top: 86px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  padding: 10px 20px;
+  background: var(--liquid-glass-bg);
+  backdrop-filter: blur(36px) saturate(200%);
+  -webkit-backdrop-filter: blur(36px) saturate(200%);
+  border: 1px solid var(--turquoise);
+  border-radius: 30px;
+  box-shadow:
+    0 12px 35px rgba(0, 0, 0, 0.65),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    0 0 25px var(--turquoise-glow);
+  font: 11px var(--mono);
+  color: #d8fcf8;
+  letter-spacing: 0.5px;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  white-space: nowrap;
+}
+
+.interact-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 /* Scene Footer */
@@ -892,23 +989,23 @@ button:focus-visible, a:focus-visible {
   letter-spacing: 0.6px;
   color: #9ca6c4;
   padding: 6px 10px;
-  border-radius: 4px;
-  transition: color 0.2s, background 0.2s;
+  border-radius: 6px;
+  transition: all 0.2s;
 }
 
 .scene-footer button:hover {
-  color: var(--cyan);
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--turquoise);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .footer-star {
-  color: var(--pink);
+  color: var(--gold);
   font-size: 11px;
 }
 
 .drag-note i {
   font-style: normal;
-  color: var(--pink);
+  color: var(--turquoise);
   margin: 0 3px;
 }
 
@@ -919,9 +1016,9 @@ button:focus-visible, a:focus-visible {
   left: 50%;
   transform: translateX(-50%);
   padding: 16px 24px;
-  background: rgba(20, 15, 28, 0.95);
-  border: 1px solid var(--pink);
-  border-radius: 10px;
+  background: rgba(18, 14, 28, 0.95);
+  border: 1px solid var(--ruby);
+  border-radius: 12px;
   font-size: 12px;
   text-align: center;
   z-index: 50;
@@ -934,8 +1031,8 @@ button:focus-visible, a:focus-visible {
   top: -100px;
   left: 20px;
   padding: 12px 16px;
-  background: var(--cyan);
-  color: #070b18;
+  background: var(--turquoise);
+  color: #060a16;
   font-weight: 600;
   z-index: 100;
   border-radius: 6px;
@@ -968,18 +1065,18 @@ button:focus-visible, a:focus-visible {
     justify-content: center;
   }
   .story-card {
-    padding: 24px 22px;
-    border-radius: 16px;
+    padding: 26px 24px;
+    border-radius: 20px;
     max-width: 100%;
   }
   .story-card h1 {
-    font-size: 32px;
+    font-size: 30px;
   }
   .story-card h2 {
-    font-size: 24px;
+    font-size: 22px;
   }
   .projects-list {
-    max-height: 42vh;
+    max-height: 40vh;
   }
   .contact-channels {
     grid-template-columns: 1fr;
@@ -1000,5 +1097,10 @@ button:focus-visible, a:focus-visible {
   }
   .scene-footer {
     display: none;
+  }
+  .interact-toast {
+    top: 70px;
+    font-size: 9px;
+    padding: 8px 14px;
   }
 }
