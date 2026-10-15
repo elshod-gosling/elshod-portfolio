@@ -1,19 +1,23 @@
-# Elshodbek — Code with character.
+# Elshod’s Night Lab
 
-A personal portfolio for **Elshodbek Ermuxammadov**: systems, shaders, and software with a point of view.
+An interactive, neon-lit Three.js portfolio for **Elshodbek Ermuxammadov**. A small workshop, a rainy night, and a shelf full of projects.
 
-**[Live website](https://elshod-gosling.github.io/elshod-portfolio/)**
+**[Step inside →](https://elshod-gosling.github.io/elshod-portfolio/)**
 
-![Portfolio preview](public/social-preview.jpg)
+![Night Lab preview](public/social-preview.jpg)
 
-## The experience
+## Explore
 
-- A custom, locally generated Three.js ribbon sculpture, with chrome, ember, and wireframe materials. Drag it, or focus it and use the arrow keys.
-- Filterable showcases for Cyberpunk Shader, FinFlow AI, ZEHN-EDU, and elab, with accessible detail dialogs and real project links.
-- A responsive editorial layout, mobile navigation, and an Uzbekistan clock.
-- Reduced-motion support, a persistent animation toggle, and a static sculpture fallback when WebGL is unavailable.
-- Rendering pauses when the sculpture is off screen or the browser tab is hidden.
-- Self-hosted fonts and artwork. No analytics, remote fonts, backend, or account required.
+Drag to orbit the workshop, scroll or pinch to zoom, and click the glowing objects:
+
+- **Project vending machine:** Cyberpunk Shader, FinFlow AI, ZEHN-EDU, and elab, with artwork and links to their real repositories.
+- **Workbench:** meet Elshodbek and explore the languages, tools, and creative interests behind the work.
+- **Rooftop trophy:** math, STEM, and computer-science competition results.
+- **Payphone:** Telegram, GitHub, Instagram, and CurseForge.
+
+The navigation dock provides the same content without requiring interaction with 3D objects. Arrow keys rotate the focused scene; `+` and `-` zoom. Escape closes a content panel and restores focus to the control that opened it.
+
+Sound is off by default. The sound button enables locally synthesized rain ambience and a quiet electrical hum. The motion button pauses the rain, fan, robot, and trophy animations; the preference persists. Reduced-motion preferences are respected, and rendering stops when the tab is hidden. The portfolio navigation remains usable if WebGL is unavailable.
 
 ## Run locally
 
@@ -24,35 +28,32 @@ npm ci
 npm run dev
 ```
 
-To build and preview the production output:
-
 ```sh
 npm run build
 npm run preview
 ```
 
-The production files are generated in `dist/`. Relative asset paths support GitHub Pages project hosting or any static web host.
+Production output is generated in `dist/`. Relative asset paths support GitHub Pages project hosting and other static hosts. Pushes to `main` build and deploy through `.github/workflows/pages.yml`.
 
-## Edit
+## Source
 
-- `index.html`: page content, project covers, links, biography, and honors.
-- `src/main.js`: project descriptions, filters, dialogs, navigation, time, and motion preferences.
-- `src/sculpture.js`: parametric geometry, rendering, materials, and input handling.
-- `src/style.css`: typography, layout, colors, responsive styles, and motion.
+- `src/workshop.js`: original procedural 3D models, lighting, live pavement reflections, bloom, rain shaders, raycasting, projected hotspots, and camera controls.
+- `src/main.js`: navigation, content panels, keyboard behavior, preferences, clock, and synthesized ambience.
+- `src/projects.js`: project descriptions and verified destinations.
+- `src/style.css`: the interface and responsive layouts.
+- `index.html`: accessible page structure and metadata.
 - `public/assets/`: optimized project artwork.
 
-Pushes to `main` run `.github/workflows/pages.yml` to build and deploy to GitHub Pages. Repository **Settings → Pages → Source** should be set to **GitHub Actions**.
+The booth includes a furnished workbench, computer screens, keyboard, mug, striped awning, neon marquee, paper lanterns, vending machine, payphone, rooftop fan and satellite dish, electrical poles and cables, stools, crates, a plant, and a robot caretaker. Models and signage are generated in code, with no external 3D service or remote model downloads.
 
-## Content and artwork
+## References and content
 
-Biography, social links, and competition results are carried forward from [Elshodbek’s previous portfolio](https://el-port.iceiy.com/?i=1). Project descriptions are grounded in the public repositories. No new clients, awards, download counts, or performance claims are invented.
+The visual direction is inspired by **[Jesse Zhou’s Ramen](https://www.jessezhou.com/)**: a small immersive environment, neon lighting, reflections, and navigation through physical objects. The workshop geometry, scene, and interface in this repository are original implementations.
+
+Biography, contact links, and competition results are carried forward from [Elshodbek’s earlier portfolio](https://el-port.iceiy.com/?i=1). Project descriptions are based on their public repositories.
 
 - Cyberpunk artwork: `2026-09-03_10.34.33.png` from [Cyberpunk-shader-.build](https://github.com/elshod-gosling/Cyberpunk-shader-.build), resized and encoded as WebP.
 - Learning-world artwork: `dist/assets/quest-worlds.webp` from [ZEHN-EDU](https://github.com/elshod-gosling/ZEHN-EDU).
-- FinFlow’s cover is an illustrative editorial graphic, not a screenshot of financial results.
-- elab’s terminal is explicitly illustrative, not a claim about an actual library API.
-- The hero sculpture is generated in code. Typography uses Inter Tight and IBM Plex Mono, distributed through Fontsource under their bundled open font licenses.
+- Fonts: Inter Tight and IBM Plex Mono via Fontsource, under their bundled open font licenses.
 
-## Verification
-
-Production build and dependency audit completed locally. Desktop, tablet, and phone layouts, gallery filters, project dialogs, keyboard navigation, mobile menu, material selection, and the persistent motion control are checked in the browser before publication.
+No analytics, remote fonts, account, or backend is required. Project and contact links open the relevant external websites.

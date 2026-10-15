@@ -3,510 +3,201 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#111110" />
+    <meta name="theme-color" content="#090b17" />
     <meta
       name="description"
-      content="Elshodbek Ermuxammadov — developer exploring the space between systems, graphics, and playful digital experiences. Selected projects, experiments, and a little controlled chaos."
+      content="Step into Elshodbek’s Night Lab. An interactive 3D corner of the internet for shaders, software, and late-night ideas."
     />
-    <meta property="og:title" content="Elshodbek — Code with character." />
+    <meta
+      property="og:title"
+      content="Elshodbek’s Night Lab — Open after dark."
+    />
     <meta
       property="og:description"
-      content="Systems. Shaders. Software with a point of view. Explore the work of Elshodbek Ermuxammadov."
+      content="An interactive neon workshop. Explore projects, meet the developer, and discover what happens after midnight."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://elshod-gosling.github.io/elshod-portfolio/" />
-    <meta property="og:image" content="https://elshod-gosling.github.io/elshod-portfolio/social-preview.jpg" />
-    <meta property="og:image:alt" content="Elshodbek’s portfolio with a metallic ribbon sculpture and the headline Code with character." />
+    <meta
+      property="og:url"
+      content="https://elshod-gosling.github.io/elshod-portfolio/"
+    />
+    <meta
+      property="og:image"
+      content="https://elshod-gosling.github.io/elshod-portfolio/social-preview.jpg"
+    />
+    <meta
+      property="og:image:alt"
+      content="Elshodbek’s neon-lit 3D Night Lab reflected in wet pavement."
+    />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="canonical" href="https://elshod-gosling.github.io/elshod-portfolio/" />
-    <title>Elshodbek — Code with character.</title>
+    <link
+      rel="canonical"
+      href="https://elshod-gosling.github.io/elshod-portfolio/"
+    />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <title>Elshodbek’s Night Lab — Open after dark.</title>
     <script type="module" src="/src/main.js"></script>
   </head>
-  <body id="top">
-    <a class="skip-link" href="#main">Skip to content</a>
-    <header class="site-header">
-      <a class="wordmark" href="#top" aria-label="Elshodbek, home"
-        >elshodbek<span>✳</span></a
-      >
-      <nav class="desktop-nav" aria-label="Main navigation">
-        <a href="#work">Work <span>04</span></a>
-        <a href="#about">About</a>
-        <a href="#contact">Let’s talk <span class="arrow">↗</span></a>
-      </nav>
-      <button
-        class="menu-toggle"
-        aria-expanded="false"
-        aria-controls="mobile-nav"
-        aria-label="Open navigation"
-      >
-        <span></span><span></span>
-      </button>
-    </header>
-    <nav
-      id="mobile-nav"
-      class="mobile-nav"
-      aria-label="Mobile navigation"
-      hidden
-    >
-      <a href="#work">Selected work <span>↗</span></a
-      ><a href="#about">A little about me <span>↗</span></a
-      ><a href="#contact">Let’s talk <span>↗</span></a>
-    </nav>
-    <main id="main">
-      <section class="hero" aria-labelledby="hero-title">
-        <div class="hero-topline mono">
-          <span
-            ><i class="status-dot"></i> INDEPENDENT DEVELOPER & CREATIVE
-            MIND</span
-          ><span class="edition">PORTFOLIO — VOL. 26</span>
-        </div>
-        <div class="hero-main">
-          <div class="hero-copy">
-            <p class="eyebrow mono">HEY, I’M ELSHODBEK.</p>
-            <h1 id="hero-title">
-              CODE WITH<br /><span class="character"
-                >CHARACTER<span class="period">.</span></span
-              >
-            </h1>
-            <div class="hero-bottom-copy">
-              <span class="asterisk" aria-hidden="true">✳</span>
-              <p>
-                I turn complex problems into<br class="desktop-break" />
-                things that look good. And work better.<br /><span
-                  >Systems, shaders & a little controlled chaos.</span
-                >
-              </p>
-            </div>
-            <a class="primary-link" href="#work"
-              >Explore my work <span>↘</span></a
-            >
-          </div>
-          <div class="sculpture-panel">
-            <div class="stage-corner top-left" aria-hidden="true"></div>
-            <div class="stage-corner bottom-right" aria-hidden="true"></div>
-            <div class="stage-label mono">
-              <span>EXPERIMENT_001</span
-              ><span id="render-status">INITIALIZING</span>
-            </div>
-            <div
-              id="sculpture"
-              role="img"
-              aria-label="Interactive metallic ribbon sculpture. Drag to rotate, or use the arrow keys while focused."
-              tabindex="0"
-            >
-              <div class="sculpture-fallback" aria-hidden="true">
-                <span></span><span></span><span></span>
-              </div>
-            </div>
-            <div class="stage-caption mono">
-              <span class="drag-hint">↔ DRAG TO EXPLORE</span
-              ><button
-                id="reset-sculpture"
-                aria-label="Reset sculpture rotation"
-              >
-                RESET ↺
-              </button>
-            </div>
-            <div
-              class="material-controls"
-              role="group"
-              aria-label="Sculpture material"
-            >
-              <button data-material="chrome" aria-pressed="true">
-                <i></i>Chrome</button
-              ><button data-material="ember" aria-pressed="false">
-                <i></i>Ember</button
-              ><button data-material="wire" aria-pressed="false">
-                <i></i>Wireframe
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="hero-footer mono">
-          <span
-            >BASED IN UZBEKISTAN <span class="muted">/</span>
-            <time id="local-time">UTC +05:00</time></span
-          ><span
-            >SCROLL FOR THE GOOD STUFF <span class="scroll-arrow">↓</span></span
-          >
-        </div>
-      </section>
-      <div class="ticker" aria-hidden="true">
-        <div class="ticker-track">
-          <span>GOOD LOGIC.</span><span class="outline-text">GREAT FEEL.</span
-          ><b>✳</b><span>ALWAYS CURIOUS.</span><b>✳</b><span>GOOD LOGIC.</span
-          ><span class="outline-text">GREAT FEEL.</span><b>✳</b
-          ><span>ALWAYS CURIOUS.</span><b>✳</b>
-        </div>
-      </div>
-      <section id="work" class="work section-pad" aria-labelledby="work-title">
-        <div class="section-kicker mono">
-          <span>01 / SELECTED WORK</span><span>LESS TALK. MORE BUILDING.</span>
-        </div>
-        <div class="section-heading">
-          <h2 id="work-title">Proof of <em>curiosity.</em></h2>
-          <p>
-            From pixels to platforms.<br />A few things I’ve put into the world.
-          </p>
-        </div>
-        <div class="work-toolbar">
-          <div class="filters" role="group" aria-label="Filter projects">
-            <button data-filter="all" aria-pressed="true">
-              All work <sup>04</sup></button
-            ><button data-filter="graphics" aria-pressed="false">
-              Graphics <sup>01</sup></button
-            ><button data-filter="products" aria-pressed="false">
-              Products <sup>02</sup></button
-            ><button data-filter="tools" aria-pressed="false">
-              Tools <sup>01</sup>
-            </button>
-          </div>
-          <span class="mono work-date">2024 — 2026</span>
-        </div>
-        <p id="filter-status" class="sr-only" aria-live="polite">
-          Showing all 4 projects.
-        </p>
-        <div class="project-grid">
-          <article class="project-card" data-category="graphics">
-            <button
-              class="project-cover shader-cover"
-              data-project="cyberpunk"
-              aria-label="Explore Cyberpunk Shader project"
-            >
-              <img
-                src="./assets/cyberpunk.webp"
-                alt="Minecraft landscape with stylized lighting from the Cyberpunk Shader project"
-                width="1200"
-                height="675"
-                loading="lazy"
-              /><span class="cover-top mono"
-                ><span>01 / REAL-TIME GRAPHICS</span><span>GLSL</span></span
-              ><span class="shader-title">ANOTHER<br /><i>ATMOSPHERE.</i></span
-              ><span class="cover-cta" aria-hidden="true">↗</span
-              ><span class="cover-bottom mono"
-                >CYBERPUNK SHADER / MINECRAFT JAVA</span
-              >
-            </button>
-            <div class="project-info">
-              <div>
-                <button class="project-title" data-project="cyberpunk">
-                  Cyberpunk Shader <span>↗</span>
-                </button>
-                <p>A different lens on a familiar world.</p>
-              </div>
-              <span class="project-tag mono">GRAPHICS / GLSL</span>
-            </div>
-          </article>
-          <article class="project-card" data-category="products">
-            <button
-              class="project-cover finflow-cover"
-              data-project="finflow"
-              aria-label="Explore FinFlow AI project"
-            >
-              <span class="cover-top mono"
-                ><span>02 / FINANCIAL INTELLIGENCE</span
-                ><span>TEAM PROJECT</span></span
-              ><span class="finflow-brand"
-                ><span class="finflow-icon">↗</span>finflow<span>ai</span></span
-              ><span class="finance-visual" aria-hidden="true"
-                ><span class="finance-caption">Clarity. From complexity.</span
-                ><span class="finance-bars"
-                  ><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i
-                  ><i></i><i></i><i></i><i></i><i></i><i></i><i></i
-                  ><i></i></span
-                ><span class="finance-axis"
-                  ><span>DATA</span><span>INSIGHT</span
-                  ><span>DECISION ↗</span></span
-                ></span
-              ><span class="cover-cta" aria-hidden="true">↗</span
-              ><span class="cover-bottom mono"
-                >NATIONAL AI HACKATHON / 2026</span
-              >
-            </button>
-            <div class="project-info">
-              <div>
-                <button class="project-title" data-project="finflow">
-                  FinFlow AI <span>↗</span>
-                </button>
-                <p>Making business numbers make sense.</p>
-              </div>
-              <span class="project-tag mono">AI / FULL STACK</span>
-            </div>
-          </article>
-          <article class="project-card" data-category="products">
-            <button
-              class="project-cover zehn-cover"
-              data-project="zehn"
-              aria-label="Explore ZEHN-EDU project"
-            >
-              <span class="cover-top mono"
-                ><span>03 / LEARNING, REIMAGINED</span
-                ><span>WEB APP</span></span
-              ><span class="zehn-brand"
-                >ZEHN<span>EDU</span><i>LEVEL UP YOUR MIND.</i></span
-              ><img
-                src="./assets/quest-worlds.webp"
-                alt="Colorful illustrated learning worlds from ZEHN-EDU"
-                width="1200"
-                height="800"
-                loading="lazy"
-              /><span class="zehn-sticker mono"
-                >PLAY.<br />LEARN.<br />REPEAT. ↗</span
-              ><span class="cover-cta" aria-hidden="true">↗</span
-              ><span class="cover-bottom mono"
-                >CODE / MATH / DIGITAL SKILLS</span
-              >
-            </button>
-            <div class="project-info">
-              <div>
-                <button class="project-title" data-project="zehn">
-                  ZEHN-EDU <span>↗</span>
-                </button>
-                <p>A learning arcade with room to play.</p>
-              </div>
-              <span class="project-tag mono">EDTECH / INTERACTIVE</span>
-            </div>
-          </article>
-          <article class="project-card" data-category="tools">
-            <button
-              class="project-cover elab-cover"
-              data-project="elab"
-              aria-label="Explore elab project"
-            >
-              <span class="cover-top mono"
-                ><span>04 / DEVELOPER TOOLS</span><span>OPEN SOURCE</span></span
-              ><span class="terminal"
-                ><span class="terminal-bar"
-                  ><i></i><i></i><i></i><span>~/elab</span></span
-                ><span class="terminal-code"
-                  ><span class="comment"># less friction. more building.</span
-                  ><br /><span class="code-purple">from</span> elab
-                  <span class="code-purple">import</span> *<br /><br /><span
-                    class="code-orange"
-                    >&gt;&gt;&gt;</span
-                  >
-                  make_it_simple<span class="code-purple">()</span><br /><span
-                    class="terminal-cursor"
-                    >▍</span
-                  ></span
-                ><span class="terminal-note mono"
-                  >ILLUSTRATIVE CODE / REAL CURIOSITY</span
-                ></span
-              ><span class="elab-word">elab<span>_</span></span
-              ><span class="cover-cta" aria-hidden="true">↗</span
-              ><span class="cover-bottom mono"
-                >PYTHON UTILITIES / BUILT TO BE USEFUL</span
-              >
-            </button>
-            <div class="project-info">
-              <div>
-                <button class="project-title" data-project="elab">
-                  elab <span>↗</span>
-                </button>
-                <p>Small tools. Less repetitive work.</p>
-              </div>
-              <span class="project-tag mono">PYTHON / UTILITIES</span>
-            </div>
-          </article>
-        </div>
-        <a
-          class="all-repos"
-          href="https://github.com/elshod-gosling?tab=repositories"
-          target="_blank"
-          rel="noopener noreferrer"
-          ><span>There’s more where that came from.</span
-          ><span>All repositories <b>↗</b></span></a
+  <body>
+    <a class="skip-link" href="#navigation">Skip to navigation</a>
+    <main id="main" aria-label="Elshodbek’s interactive portfolio">
+      <div
+        id="world"
+        tabindex="0"
+        role="img"
+        aria-label="A neon-lit 3D workshop on a rainy night. Drag to orbit and scroll to zoom. Explore the labeled objects or use the navigation below."
+      ></div>
+      <div class="vignette" aria-hidden="true"></div>
+      <div class="grain" aria-hidden="true"></div>
+      <header class="header">
+        <button
+          class="brand"
+          data-section="home"
+          aria-label="Return to the workshop"
         >
-      </section>
-      <section
-        class="about section-pad"
-        id="about"
-        aria-labelledby="about-title"
+          <span class="brand-icon" aria-hidden="true">e<span>_</span></span
+          ><span>ELSHOD’S<span>NIGHT LAB</span></span>
+        </button>
+        <div class="header-right">
+          <span class="time-display"
+            ><i></i>UZBEKISTAN <time id="local-time">UTC+5</time></span
+          ><button
+            id="sound-toggle"
+            class="icon-button"
+            aria-pressed="false"
+            aria-label="Enable ambient sound"
+          >
+            <span class="sound-icon" aria-hidden="true"
+              ><i></i><i></i><i></i><i></i
+            ></span></button
+          ><button
+            id="motion-toggle"
+            class="icon-button"
+            aria-pressed="false"
+            aria-label="Pause animation"
+          >
+            <span id="motion-icon" aria-hidden="true">Ⅱ</span>
+          </button>
+        </div>
+      </header>
+      <div id="intro" class="intro">
+        <span class="eyebrow"><i></i> OPEN AFTER DARK</span>
+        <h1>A little corner <br />of the <em>internet.</em></h1>
+        <p>
+          Code, curiosity & a few late nights. <br />Welcome to Elshodbek’s
+          world.
+        </p>
+        <button id="enter-button" class="enter-button">
+          Step inside <span>↗</span></button
+        ><span id="load-status" role="status">Warming up the neon…</span>
+      </div>
+      <div
+        id="hotspots"
+        class="hotspots"
+        inert
+        aria-label="Explore the workshop"
       >
-        <div class="section-kicker mono">
-          <span>02 / THE PERSON BEHIND THE PIXELS</span
-          ><span>ALWAYS A WORK IN PROGRESS.</span>
-        </div>
-        <div class="about-grid">
-          <div class="about-left">
-            <div class="name-stamp" aria-hidden="true">
-              <span>EL</span><i>✳</i
-              ><span class="mono">MADE OF CURIOSITY.</span>
-            </div>
-            <p class="mono">
-              ELSHODBEK ERMUXAMMADOV<br /><span>DEVELOPER · UZBEKISTAN</span>
-            </p>
-          </div>
-          <div class="about-copy">
-            <h2 id="about-title">
-              A problem solver.<br />A pixel perfectionist.<br /><span
-                >A serial “what if?” person.</span
-              >
-            </h2>
-            <p>
-              I’m Elshodbek, a developer drawn to the space where technical
-              depth meets creative freedom. One day it’s an algorithm. The next,
-              a shader that changes the whole mood of a world.
-            </p>
-            <p>
-              I build with C++, Python, TypeScript, and GLSL. I like systems
-              that are efficient, interfaces that feel intentional, and the part
-              of a project where an idea finally comes alive.
-            </p>
-            <a
-              class="text-link"
-              href="https://github.com/orgs/FstudentsTTT/repositories"
-              target="_blank"
-              rel="noopener noreferrer"
-              >Also building with FstudentsTTT <span>↗</span></a
-            >
-          </div>
-        </div>
-        <div class="capabilities">
-          <div>
-            <span class="mono">01 / ENGINEERING</span>
-            <h3>Under the hood.</h3>
-            <p>
-              C++ · Python · TypeScript<br />Algorithms · Full-stack development
-            </p>
-          </div>
-          <div>
-            <span class="mono">02 / GRAPHICS</span>
-            <h3>Beyond the surface.</h3>
-            <p>
-              GLSL · WebGL · Three.js<br />Shaders · Blender · Real-time
-              rendering
-            </p>
-          </div>
-          <div>
-            <span class="mono">03 / EXPERIMENTS</span>
-            <h3>Outside the box.</h3>
-            <p>C# · Unity · Linux<br />Game mechanics · Open-source tools</p>
-          </div>
-        </div>
-      </section>
-      <section class="honors section-pad" aria-labelledby="honors-title">
-        <div class="section-kicker mono">
-          <span>03 / A COMPETITIVE STREAK</span
-          ><span>MATH. LOGIC. PERSISTENCE.</span>
-        </div>
-        <div class="honors-layout">
-          <h2 id="honors-title">More than<br /><em>side quests.</em></h2>
-          <div class="honors-list">
-            <div class="honor">
-              <span class="mono">2026</span>
-              <div>
-                <h3>Purple Comet</h3>
-                <p>International Math Competition · Uzbekistan</p>
-              </div>
-              <span class="placement">1st <span>PLACE</span></span>
-            </div>
-            <div class="honor">
-              <span class="mono">2025</span>
-              <div>
-                <h3>Regional STEM Olympiad</h3>
-                <p>Applied sciences & logical problem solving</p>
-              </div>
-              <span class="placement">3rd <span>PLACE</span></span>
-            </div>
-            <div class="honor">
-              <span class="mono">2024</span>
-              <div>
-                <h3>Computer Science Olympiad</h3>
-                <p>Regional · Informatics & algorithms</p>
-              </div>
-              <span class="placement">3rd <span>PLACE</span></span>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section
-        class="contact section-pad"
-        id="contact"
-        aria-labelledby="contact-title"
+        <button
+          class="hotspot"
+          aria-label="Explore projects"
+          data-spot="projects"
+          data-section="projects"
+        >
+          <span class="spot-ring"></span
+          ><span class="spot-label">01 <b>THE PROJECTS</b> ↗</span>
+        </button>
+        <button
+          class="hotspot"
+          aria-label="Meet Elshodbek"
+          data-spot="about"
+          data-section="about"
+        >
+          <span class="spot-ring"></span
+          ><span class="spot-label">02 <b>THE DEVELOPER</b> ↗</span>
+        </button>
+        <button
+          class="hotspot"
+          aria-label="Explore honors"
+          data-spot="honors"
+          data-section="honors"
+        >
+          <span class="spot-ring"></span
+          ><span class="spot-label">03 <b>THE SIDE QUESTS</b> ↗</span>
+        </button>
+        <button
+          class="hotspot"
+          aria-label="Contact Elshodbek"
+          data-spot="contact"
+          data-section="contact"
+        >
+          <span class="spot-ring"></span
+          ><span class="spot-label">04 <b>SAY HELLO</b> ↗</span>
+        </button>
+      </div>
+      <div id="scene-hint" class="scene-hint">
+        <span class="hint-dot"></span> FOLLOW YOUR CURIOSITY. CLICK SOMETHING
+        THAT GLOWS.
+      </div>
+      <nav id="navigation" class="dock" aria-label="Portfolio navigation">
+        <button data-section="home" aria-current="page">
+          <span aria-hidden="true">⌂</span><b>The lab</b></button
+        ><span class="dock-divider" aria-hidden="true"></span
+        ><button data-section="projects">
+          <span aria-hidden="true">▦</span><b>Projects</b></button
+        ><button data-section="about">
+          <span aria-hidden="true">☺</span><b>About</b></button
+        ><button data-section="honors">
+          <span aria-hidden="true">✧</span><b>Honors</b></button
+        ><button data-section="contact">
+          <span aria-hidden="true">↗</span><b>Contact</b>
+        </button>
+      </nav>
+      <footer class="scene-footer">
+        <span
+          >BUILT WITH CURIOSITY <span class="footer-star">✳</span>
+          <span id="year">2026</span></span
+        ><button id="reset-view">RESET VIEW ↺</button
+        ><span class="drag-note">DRAG TO ORBIT <i>·</i> SCROLL TO ZOOM</span>
+      </footer>
+      <aside
+        id="content-panel"
+        class="content-panel"
+        aria-labelledby="panel-title"
+        hidden
       >
-        <div class="section-kicker mono">
-          <span>04 / YOUR MOVE</span
-          ><span
-            ><i class="contact-dot"></i> GOOD IDEAS START WITH A HELLO.</span
+        <div class="panel-header">
+          <span id="panel-eyebrow" class="eyebrow"></span
+          ><button
+            id="panel-close"
+            class="icon-button"
+            aria-label="Close panel"
           >
+            ✕
+          </button>
         </div>
-        <div class="contact-main">
-          <h2 id="contact-title">LET’S MAKE<br />SOMETHING <em>MATTER.</em></h2>
-          <a
-            class="contact-orb"
-            href="https://t.me/elshod_gosling"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Start a conversation with Elshodbek on Telegram"
-            >↗</a
-          >
+        <div class="panel-scroll">
+          <h2 id="panel-title"></h2>
+          <div id="panel-content"></div>
         </div>
-        <div class="contact-bottom">
-          <p>
-            A project, a collaboration, or a wonderfully weird idea.<br />I’m
-            listening.
-          </p>
-          <a
-            href="https://t.me/elshod_gosling"
-            target="_blank"
-            rel="noopener noreferrer"
-            >Say hello on Telegram ↗</a
-          >
+        <div class="panel-bottom">
+          <span><i></i> ANOTHER LATE-NIGHT IDEA.</span><span>EL / 26</span>
         </div>
-      </section>
+      </aside>
+      <div id="scene-error" class="scene-error" hidden>
+        <p>The workshop is taking a night off on this device.</p>
+        <span>You can still explore everything using the menu below.</span>
+      </div>
+      <div id="announcement" class="sr-only" aria-live="polite"></div>
     </main>
-    <footer class="site-footer">
-      <div class="footer-top">
-        <a class="wordmark" href="#top">elshodbek<span>✳</span></a>
-        <div class="footer-links">
-          <a
-            href="https://github.com/elshod-gosling"
-            target="_blank"
-            rel="noopener noreferrer"
-            >GitHub ↗</a
-          ><a
-            href="https://instagram.com/elshod.for.real"
-            target="_blank"
-            rel="noopener noreferrer"
-            >Instagram ↗</a
-          ><a
-            href="https://www.curseforge.com/members/elshodbek/projects"
-            target="_blank"
-            rel="noopener noreferrer"
-            >CurseForge ↗</a
-          >
-        </div>
-      </div>
-      <div class="footer-bottom mono">
-        <span>© <span id="year">2026</span> ELSHODBEK ERMUXAMMADOV</span
-        ><button id="motion-toggle" aria-pressed="false">
-          MOTION: ON <span>◉</span></button
-        ><a href="#top">BACK TO TOP ↑</a>
-      </div>
-    </footer>
-    <dialog id="project-dialog" aria-labelledby="dialog-title">
-      <div class="dialog-shell">
-        <button class="dialog-close" aria-label="Close project details">
-          ✕</button
-        ><span id="dialog-category" class="mono"></span>
-        <h2 id="dialog-title"></h2>
-        <p id="dialog-description"></p>
-        <div id="dialog-tags" class="dialog-tags"></div>
-        <div class="dialog-links">
-          <a id="dialog-source" target="_blank" rel="noopener noreferrer"
-            >View source <span>↗</span></a
-          ><a id="dialog-live" target="_blank" rel="noopener noreferrer"
-            >Visit project <span>↗</span></a
-          >
-        </div>
-      </div>
-    </dialog>
     <noscript
-      ><div class="noscript-note">
-        Project links are available through “All repositories.” Enable
-        JavaScript for the 3D playground and project filters.
+      ><div class="noscript">
+        <h1>Elshodbek Ermuxammadov</h1>
+        <p>
+          Developer exploring systems, shaders, and software. This 3D experience
+          needs JavaScript.
+        </p>
+        <a href="https://github.com/elshod-gosling">Explore my GitHub ↗</a
+        ><a href="https://t.me/elshod_gosling">Say hello on Telegram ↗</a>
       </div></noscript
     >
   </body>

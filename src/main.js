@@ -1,231 +1,285 @@
 import "./style.css";
+import { projects } from "./projects.js";
 
-const projects = {
-  cyberpunk: {
-    title: "Cyberpunk Shader",
-    category: "01 / REAL-TIME GRAPHICS",
-    description:
-      "A shader pack that gives Minecraft Java a different atmosphere: neon color, cinematic lighting, and a world that feels a little more cyberpunk. Built with GLSL for the OptiFine and Iris rendering ecosystem.",
-    tags: ["GLSL", "Shaders", "Minecraft Java", "OptiFine / Iris"],
-    source: "https://github.com/elshod-gosling/Cyberpunk-shader-.build",
-    live: "https://www.curseforge.com/members/elshodbek/projects",
-  },
-  finflow: {
-    title: "FinFlow AI",
-    category: "02 / AI & FULL-STACK DEVELOPMENT",
-    description:
-      "Built with the FstudentsTTT team for the National AI Hackathon 2026. FinFlow AI brings financial analysis, business visibility, and AI-assisted insights to small and medium businesses in Uzbekistan. A Next.js frontend meets a Python and FastAPI backend.",
-    tags: ["Team project", "Next.js", "Python", "FastAPI"],
-    source: "https://github.com/FstudentsTTT/FinFlow",
-  },
-  zehn: {
-    title: "ZEHN-EDU",
-    category: "03 / INTERACTIVE LEARNING",
-    description:
-      "A multilingual learning arcade that turns coding, mathematics, typing, and digital skills into playful challenges. Explore illustrated worlds and introductory exercises in English, Uzbek, and Russian. Built as a learning prototype with an emphasis on approachable interaction.",
-    tags: ["Web app", "Education", "English / Uzbek / Russian", "Interactive"],
-    source: "https://github.com/elshod-gosling/ZEHN-EDU",
-    live: "https://elshod-gosling.github.io/ZEHN-EDU/",
-  },
-  elab: {
-    title: "elab",
-    category: "04 / OPEN-SOURCE TOOLS",
-    description:
-      "An open-source Python utility library built around a simple idea: useful functions should make the next thing easier to build. A space for practical helpers, experiments, and everyday developer tools. The terminal illustration on this portfolio is a visual concept, not a library API example.",
-    tags: ["Python", "Utilities", "Open source"],
-    source: "https://github.com/elshod-gosling/elab",
-  },
+const $ = (selector) => document.querySelector(selector);
+const panel = $("#content-panel");
+const panelContent = $("#panel-content");
+const panelTitle = $("#panel-title");
+const announcement = $("#announcement");
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+let workshop,
+  entered = false,
+  section = "home",
+  opener;
+let motionOn = !reducedMotion.matches;
+try {
+  if (localStorage.getItem("night-lab-motion") === "off") motionOn = false;
+} catch {}
+
+const projectSummaries = {
+  cyberpunk: [
+    "01 / REAL-TIME GRAPHICS",
+    "A different atmosphere for Minecraft Java.",
+    "GLSL · OPTIFINE / IRIS",
+  ],
+  finflow: [
+    "02 / AI & FULL STACK",
+    "Financial clarity, built with FstudentsTTT.",
+    "NEXT.JS · PYTHON · FASTAPI",
+  ],
+  zehn: [
+    "03 / INTERACTIVE LEARNING",
+    "A multilingual learning arcade.",
+    "EDTECH · EN / UZ / RU",
+  ],
+  elab: [
+    "04 / DEVELOPER TOOLS",
+    "Useful Python helpers for everyday building.",
+    "PYTHON · OPEN SOURCE",
+  ],
 };
 
-const menuButton = document.querySelector(".menu-toggle");
-const mobileNav = document.querySelector("#mobile-nav");
-function closeMenu() {
-  mobileNav.hidden = true;
-  menuButton.setAttribute("aria-expanded", "false");
-  menuButton.setAttribute("aria-label", "Open navigation");
+function enter() {
+  if (entered) return;
+  entered = true;
+  document.body.classList.add("entered");
+  $("#intro").inert = true;
+  $("#hotspots").inert = false;
+  workshop?.enter();
+  announcement.textContent =
+    "Welcome to the Night Lab. Explore the glowing objects or use the navigation.";
 }
-menuButton.addEventListener("click", () => {
-  const open = menuButton.getAttribute("aria-expanded") !== "true";
-  mobileNav.hidden = !open;
-  menuButton.setAttribute("aria-expanded", String(open));
-  menuButton.setAttribute(
-    "aria-label",
-    open ? "Close navigation" : "Open navigation",
-  );
-});
-mobileNav
-  .querySelectorAll("a")
-  .forEach((link) => link.addEventListener("click", closeMenu));
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !mobileNav.hidden) {
-    closeMenu();
-    menuButton.focus();
-  }
-});
-window.matchMedia("(min-width: 701px)").addEventListener("change", (event) => {
-  if (event.matches) closeMenu();
+$("#enter-button").addEventListener("click", () => {
+  enter();
+  $("#navigation button").focus({ preventScroll: true });
 });
 
-const cards = [...document.querySelectorAll(".project-card")];
-document.querySelectorAll("[data-filter]").forEach((button) => {
-  button.addEventListener("click", () => {
-    const filter = button.dataset.filter;
-    document
-      .querySelectorAll("[data-filter]")
-      .forEach((item) =>
-        item.setAttribute("aria-pressed", String(item === button)),
-      );
-    cards.forEach((card) => {
-      card.hidden = filter !== "all" && card.dataset.category !== filter;
-    });
-    const count = cards.filter((card) => !card.hidden).length;
-    const category = {
-      all: "",
-      graphics: "graphics ",
-      products: "product ",
-      tools: "tool ",
-    }[filter];
-    document.querySelector("#filter-status").textContent =
-      `Showing ${count} ${category}project${count === 1 ? "" : "s"}.`;
-  });
-});
-
-const dialog = document.querySelector("#project-dialog");
-let dialogOpener;
-document.querySelectorAll("[data-project]").forEach((button) =>
-  button.addEventListener("click", () => {
-    const project = projects[button.dataset.project];
-    dialogOpener = button;
-    document.querySelector("#dialog-category").textContent = project.category;
-    document.querySelector("#dialog-title").textContent = project.title;
-    document.querySelector("#dialog-description").textContent =
-      project.description;
-    document.querySelector("#dialog-tags").replaceChildren(
-      ...project.tags.map((tag) => {
-        const span = document.createElement("span");
-        span.textContent = tag;
-        return span;
-      }),
-    );
-    document.querySelector("#dialog-source").href = project.source;
-    const live = document.querySelector("#dialog-live");
-    live.hidden = !project.live;
-    if (project.live) live.href = project.live;
-    else live.removeAttribute("href");
-    dialog.showModal();
-    document.body.style.overflow = "hidden";
-  }),
-);
-document
-  .querySelector(".dialog-close")
-  .addEventListener("click", () => dialog.close());
-dialog.addEventListener("click", (event) => {
-  if (event.target === dialog) {
-    const rect = dialog.getBoundingClientRect();
-    if (
-      event.clientX < rect.left ||
-      event.clientX > rect.right ||
-      event.clientY < rect.top ||
-      event.clientY > rect.bottom
+function renderProjects() {
+  panelTitle.textContent = "Ideas, out in the wild.";
+  panelContent.innerHTML = `<p class="panel-intro">Pick something off the shelf. Everything here started with a little curiosity.</p>${Object.entries(
+    projects,
+  )
+    .map(
+      ([id, p]) =>
+        `<button class="project-row" data-project="${id}"><span class="project-row-top"><span>${projectSummaries[id][0]}</span><span>↗</span></span><h3>${p.title}</h3><p>${projectSummaries[id][1]}</p><div class="row-tags">${projectSummaries[id][2]}</div></button>`,
     )
-      dialog.close();
+    .join(
+      "",
+    )}<a class="panel-link secondary" href="https://github.com/elshod-gosling?tab=repositories" target="_blank" rel="noopener noreferrer">All repositories <span>↗</span></a>`;
+}
+function renderProject(id) {
+  const p = projects[id];
+  panelTitle.textContent = p.title;
+  const art =
+    id === "cyberpunk"
+      ? "./assets/cyberpunk.webp"
+      : id === "zehn"
+        ? "./assets/quest-worlds.webp"
+        : null;
+  panelContent.innerHTML = `<button class="text-back" data-back>← BACK TO THE SHELF</button>${art ? `<img class="project-art ${id}" src="${art}" alt="${p.title} project artwork" />` : ""}<p class="panel-intro">${p.description}</p><div class="tag-list">${p.tags.map((t) => `<span>${t}</span>`).join("")}</div><a class="panel-link" href="${p.source}" target="_blank" rel="noopener noreferrer">View source on GitHub <span>↗</span></a>${p.live ? `<a class="panel-link secondary" href="${p.live}" target="_blank" rel="noopener noreferrer">Visit the project <span>↗</span></a>` : ""}`;
+  $(".panel-scroll").scrollTop = 0;
+  panelTitle.focus({ preventScroll: true });
+  announcement.textContent = `${p.title} project details.`;
+}
+const sectionContent = {
+  about: () => {
+    panelTitle.innerHTML = "The human<br />behind the screen.";
+    panelContent.innerHTML = `<p class="panel-intro">Hey, I’m <span class="bio-name">Elshodbek Ermuxammadov</span>, a developer from Uzbekistan. I like the space where technical depth meets creative freedom. One day it’s an algorithm. The next, a shader that changes the whole mood of a world.</p><p class="panel-intro">I build systems, experiment with graphics, and turn “what if?” into things you can actually use. This workshop is a little window into that world.</p><div class="bio-list"><div><span>UNDER THE HOOD</span><p>C++ · Python · TypeScript<br />Algorithms & full-stack development</p></div><div><span>BEYOND THE SURFACE</span><p>GLSL · WebGL · Blender<br />Shaders & real-time rendering</p></div><div><span>AFTER HOURS</span><p>C# · Unity · Linux<br />Game mechanics & open-source tools</p></div></div><a class="panel-link" href="https://github.com/orgs/FstudentsTTT/repositories" target="_blank" rel="noopener noreferrer">Also building with FstudentsTTT <span>↗</span></a>`;
+  },
+  honors: () => {
+    panelTitle.innerHTML = "A competitive<br />streak.";
+    panelContent.innerHTML = `<p class="panel-intro">Math, logic, and the persistence to keep working when the first idea doesn’t.</p><div class="honor-row"><span class="honor-year">2026</span><div><h3>Purple Comet</h3><p>International Math Competition<br />Uzbekistan</p></div><span class="honor-place">1st<small>PLACE</small></span></div><div class="honor-row"><span class="honor-year">2025</span><div><h3>Regional STEM Olympiad</h3><p>Applied sciences & logical problem solving</p></div><span class="honor-place">3rd<small>PLACE</small></span></div><div class="honor-row"><span class="honor-year">2024</span><div><h3>Computer Science Olympiad</h3><p>Regional · Informatics & algorithms</p></div><span class="honor-place">3rd<small>PLACE</small></span></div>`;
+  },
+  contact: () => {
+    panelTitle.innerHTML = "Good things start<br />with a hello.";
+    panelContent.innerHTML = `<p class="contact-heading">A project, a collaboration,<br />or a wonderfully weird idea.</p><p class="panel-intro">The lab is open. Drop me a message and let’s see where the conversation goes.</p><a class="panel-link" href="https://t.me/elshod_gosling" target="_blank" rel="noopener noreferrer">Telegram / @elshod_gosling <span>↗</span></a><a class="panel-link secondary" href="https://github.com/elshod-gosling" target="_blank" rel="noopener noreferrer">GitHub / elshod-gosling <span>↗</span></a><a class="panel-link secondary" href="https://instagram.com/elshod.for.real" target="_blank" rel="noopener noreferrer">Instagram / elshod.for.real <span>↗</span></a><a class="panel-link secondary" href="https://www.curseforge.com/members/elshodbek/projects" target="_blank" rel="noopener noreferrer">CurseForge / elshodbek <span>↗</span></a><p class="contact-note">BASED IN UZBEKISTAN · UTC+5<br />ALWAYS CURIOUS ABOUT WHAT’S NEXT.</p>`;
+  },
+};
+function openSection(next, trigger) {
+  if (trigger) opener = trigger;
+  enter();
+  section = next;
+  $("#hotspots").inert = next !== "home";
+  document.querySelectorAll(".dock [data-section]").forEach((button) => {
+    if (button.dataset.section === next)
+      button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
+  if (next === "home") {
+    panel.hidden = true;
+    document.body.classList.remove("has-panel");
+    workshop?.focus("home");
+    return;
   }
+  $("#panel-eyebrow").textContent = {
+    projects: "01 / THE PROJECT SHELF",
+    about: "02 / MEET THE DEVELOPER",
+    honors: "03 / THE SIDE QUESTS",
+    contact: "04 / THE HOTLINE",
+  }[next];
+  if (next === "projects") renderProjects();
+  else sectionContent[next]();
+  panel.hidden = false;
+  document.body.classList.add("has-panel");
+  $(".panel-scroll").scrollTop = 0;
+  panelTitle.tabIndex = -1;
+  panelTitle.focus({ preventScroll: true });
+  workshop?.focus(next);
+  announcement.textContent = `${panelTitle.innerText} panel opened.`;
+}
+document
+  .querySelectorAll("[data-section]")
+  .forEach((button) =>
+    button.addEventListener("click", () =>
+      openSection(button.dataset.section, button),
+    ),
+  );
+panelContent.addEventListener("click", (event) => {
+  const target = event.target.closest("[data-project],[data-back]");
+  if (!target) return;
+  if (target.hasAttribute("data-back")) {
+    renderProjects();
+    panelTitle.focus({ preventScroll: true });
+  } else renderProject(target.dataset.project);
 });
-dialog.addEventListener("close", () => {
-  document.body.style.overflow = "";
-  dialogOpener?.focus({ preventScroll: true });
+function closePanel() {
+  openSection("home");
+  opener?.focus({ preventScroll: true });
+}
+$("#panel-close").addEventListener("click", closePanel);
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !panel.hidden) closePanel();
 });
-
-const timeFormat = new Intl.DateTimeFormat("en-GB", {
+$("#reset-view").addEventListener("click", () => {
+  openSection("home");
+  workshop?.reset();
+});
+const clockFormat = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Asia/Tashkent",
   hour: "2-digit",
   minute: "2-digit",
   hour12: false,
 });
-function updateTime() {
+function clock() {
   const now = new Date();
-  document.querySelector("#local-time").textContent =
-    `${timeFormat.format(now)} UZT`;
-  document.querySelector("#local-time").dateTime = now.toISOString();
-  document.querySelector("#year").textContent = new Intl.DateTimeFormat("en", {
+  $("#local-time").textContent = clockFormat.format(now);
+  $("#local-time").dateTime = now.toISOString();
+  $("#year").textContent = new Intl.DateTimeFormat("en", {
     timeZone: "Asia/Tashkent",
     year: "numeric",
   }).format(now);
 }
-updateTime();
-setInterval(updateTime, 30000);
-
-const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-let motionOn = !reducedMotion.matches;
-try {
-  if (localStorage.getItem("el-motion") === "off") motionOn = false;
-} catch {
-  /* Storage can be disabled. */
-}
-let sculpture;
-let activeMaterial = "chrome";
-const motionButton = document.querySelector("#motion-toggle");
+clock();
+setInterval(clock, 30000);
 function applyMotion() {
-  document.documentElement.classList.toggle("motion-paused", !motionOn);
-  motionButton.setAttribute("aria-pressed", String(!motionOn));
-  motionButton.innerHTML = `MOTION: ${motionOn ? "ON" : "OFF"} <span>${motionOn ? "◉" : "○"}</span>`;
-  motionButton.setAttribute(
+  document.body.classList.toggle("motion-paused", !motionOn);
+  $("#motion-toggle").setAttribute("aria-pressed", String(!motionOn));
+  $("#motion-toggle").setAttribute(
     "aria-label",
-    motionOn ? "Pause animations" : "Resume animations",
+    motionOn ? "Pause animation" : "Resume animation",
   );
-  sculpture?.setMotion(motionOn);
+  $("#motion-icon").textContent = motionOn ? "Ⅱ" : "▷";
+  workshop?.setMotion(motionOn);
 }
 applyMotion();
-motionButton.addEventListener("click", () => {
+$("#motion-toggle").addEventListener("click", () => {
   motionOn = !motionOn;
   try {
-    localStorage.setItem("el-motion", motionOn ? "on" : "off");
-  } catch {
-    /* Optional preference. */
-  }
+    localStorage.setItem("night-lab-motion", motionOn ? "on" : "off");
+  } catch {}
   applyMotion();
 });
 reducedMotion.addEventListener("change", (event) => {
   motionOn = !event.matches;
   applyMotion();
 });
-document.querySelectorAll("[data-material]").forEach((button) =>
-  button.addEventListener("click", () => {
-    activeMaterial = button.dataset.material;
-    document
-      .querySelectorAll("[data-material]")
-      .forEach((item) =>
-        item.setAttribute("aria-pressed", String(item === button)),
-      );
-    sculpture?.setMaterial(activeMaterial);
-  }),
-);
-document
-  .querySelector("#reset-sculpture")
-  .addEventListener("click", () => sculpture?.reset());
 
-async function startSculpture() {
-  const host = document.querySelector("#sculpture");
+let audioContext,
+  audioGain,
+  soundOn = false;
+$("#sound-toggle").addEventListener("click", async () => {
   try {
-    const { createSculpture } = await import("./sculpture.js");
-    sculpture = createSculpture(host, motionOn);
-    sculpture.setMaterial(activeMaterial);
-    document.querySelector("#render-status").textContent = "LIVE / WEBGL";
-    host.classList.add("is-ready");
+    if (!audioContext) {
+      audioContext = new AudioContext();
+      audioGain = audioContext.createGain();
+      audioGain.gain.value = 0;
+      audioGain.connect(audioContext.destination);
+      const buffer = audioContext.createBuffer(
+        1,
+        audioContext.sampleRate * 3,
+        audioContext.sampleRate,
+      );
+      const values = buffer.getChannelData(0);
+      let last = 0;
+      for (let i = 0; i < values.length; i++) {
+        last = (last + Math.random() * 0.04 - 0.02) / 1.025;
+        values[i] = last * 3;
+      }
+      const noise = audioContext.createBufferSource();
+      noise.buffer = buffer;
+      noise.loop = true;
+      const filter = audioContext.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 1400;
+      noise.connect(filter);
+      filter.connect(audioGain);
+      noise.start();
+      const hum = audioContext.createOscillator();
+      hum.type = "sine";
+      hum.frequency.value = 65;
+      const humGain = audioContext.createGain();
+      humGain.gain.value = 0.06;
+      hum.connect(humGain);
+      humGain.connect(audioGain);
+      hum.start();
+    }
+    await audioContext.resume();
+    soundOn = !soundOn;
+    audioGain.gain.setTargetAtTime(
+      soundOn ? 0.22 : 0,
+      audioContext.currentTime,
+      0.4,
+    );
+    $("#sound-toggle").setAttribute("aria-pressed", String(soundOn));
+    $("#sound-toggle").setAttribute(
+      "aria-label",
+      soundOn ? "Mute ambient sound" : "Enable ambient sound",
+    );
+  } catch {
+    announcement.textContent = "Ambient sound is unavailable in this browser.";
+  }
+});
+document.addEventListener("visibilitychange", () => {
+  if (audioContext)
+    audioGain.gain.setTargetAtTime(
+      document.hidden ? 0 : soundOn ? 0.22 : 0,
+      audioContext.currentTime,
+      0.2,
+    );
+});
+
+async function startWorld() {
+  try {
+    await document.fonts.ready;
+    const { createWorkshop } = await import("./workshop.js");
+    workshop = await createWorkshop($("#world"), {
+      motion: motionOn,
+      onSelect: (id) => openSection(id, $(`[data-spot="${id}"]`)),
+      onProgress: (text) => ($("#load-status").textContent = text),
+    });
+    document.body.classList.add("world-ready");
+    $("#load-status").textContent = "THE LIGHTS ARE ON. COME ON IN.";
+    if (entered) workshop.enter();
+    if (section !== "home") workshop.focus(section);
   } catch (error) {
     console.warn(
-      "The interactive sculpture is unavailable. Showing the static sculpture.",
+      "3D workshop unavailable; portfolio navigation remains available.",
       error,
     );
-    document.querySelector("#render-status").textContent = "STATIC / LOW POWER";
-    document.querySelector(".material-controls").hidden = true;
-    document.querySelector("#reset-sculpture").hidden = true;
-    document.querySelector(".drag-hint").textContent = "FORM / EXPLORATION";
-    host.removeAttribute("tabindex");
-    host.setAttribute(
-      "aria-label",
-      "Abstract sculptural rings, static fallback",
-    );
+    document.body.classList.add("no-webgl", "entered");
+    $("#scene-error").hidden = false;
+    $("#world").removeAttribute("tabindex");
+    $("#scene-hint").hidden = true;
   }
 }
-startSculpture();
+startWorld();
