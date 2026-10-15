@@ -24,13 +24,13 @@ const random = (() => {
 })();
 
 export async function createWorkshop(host, options) {
-  options.onProgress("Toshkent Night Lab ishga tushirilmoqda…");
+  options.onProgress("Initializing Night Lab…");
   const mobile = () => host.clientWidth < 768;
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
     powerPreference: "high-performance",
   });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, mobile() ? 1.5 : 1.75));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile() ? 1.25 : 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.15;
   renderer.setClearColor(0x060a16);
@@ -41,7 +41,7 @@ export async function createWorkshop(host, options) {
   scene.background = new THREE.Color(0x060a16);
   scene.fog = new THREE.FogExp2(0x060a16, 0.02);
 
-  // Cinematic Perspective Camera with generous field of view and breathing room
+  // Cinematic Perspective Camera with generous field of view and zoomed-in hero framing
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 150);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = options.motion;
@@ -53,20 +53,20 @@ export async function createWorkshop(host, options) {
   controls.maxPolarAngle = 1.52;
   controls.minAzimuthAngle = -1.4;
   controls.maxAzimuthAngle = 1.6;
-  controls.minDistance = 6;
-  controls.maxDistance = 45;
+  controls.minDistance = 5;
+  controls.maxDistance = 35;
   controls.rotateSpeed = 0.6;
   controls.zoomSpeed = 0.7;
-  controls.target.set(0, 2.3, 0);
-  camera.position.set(14.2, 8.5, 17.2);
+  controls.target.set(0, 2.2, 0);
+  camera.position.set(9.0, 5.2, 11.5);
 
   const composer = new EffectComposer(renderer);
-  composer.renderTarget1.samples = mobile() ? 2 : 4;
-  composer.renderTarget2.samples = mobile() ? 2 : 4;
+  composer.renderTarget1.samples = mobile() ? 0 : 2;
+  composer.renderTarget2.samples = mobile() ? 0 : 2;
   composer.addPass(new RenderPass(scene, camera));
   const bloom = new UnrealBloomPass(
-    new THREE.Vector2(800, 600),
-    0.42,
+    new THREE.Vector2(400, 300),
+    0.38,
     0.45,
     0.92,
   );
@@ -93,21 +93,17 @@ export async function createWorkshop(host, options) {
     rubyGlow = glow(RUBY),
     goldGlow = glow(GOLD);
 
-  // Genuine Liquid Glass Material with transmission and physical refraction
+  // Ultra-Performant Liquid Glass Material (Glossy clearcoat, high reflectivity, zero scene-pass cost)
   const liquidGlassMat = new THREE.MeshPhysicalMaterial({
-    roughness: 0.08,
-    transmission: 0.94,
-    thickness: 1.2,
-    ior: 1.52,
+    roughness: 0.06,
+    metalness: 0.08,
+    transmission: 0.0,
     transparent: true,
-    opacity: 0.9,
+    opacity: 0.36,
     color: new THREE.Color(0xa5f4ff),
-    attenuationColor: new THREE.Color(0x00c4df),
-    attenuationDistance: 1.8,
-    metalness: 0.05,
     clearcoat: 1.0,
-    clearcoatRoughness: 0.08,
-    specularIntensity: 1.0,
+    clearcoatRoughness: 0.06,
+    reflectivity: 0.95,
     depthWrite: false,
   });
 
@@ -282,7 +278,7 @@ export async function createWorkshop(host, options) {
     shaderImage.anisotropy = 4;
   }
 
-  options.onProgress("Toshkent Night Lab bezatilmoqda…");
+  options.onProgress("Lighting up the neon workshop…");
 
   // Wet pavement with live planar reflection and rain ripple distortion
   const floorShader = {
@@ -310,8 +306,8 @@ export async function createWorkshop(host, options) {
       "vec4(mix(vec3(.0021,.00335,.0091),base.rgb*.48,exp(-length(vGround)*.018)),1.0)",
     );
   const floor = new Reflector(new THREE.PlaneGeometry(160, 160), {
-    textureWidth: mobile() ? 512 : 1024,
-    textureHeight: mobile() ? 512 : 1024,
+    textureWidth: mobile() ? 256 : 512,
+    textureHeight: mobile() ? 256 : 512,
     clipBias: 0.003,
     shader: floorShader,
     multisample: 0,
@@ -446,7 +442,7 @@ export async function createWorkshop(host, options) {
     );
   }
   label(
-    "KOD VA IJOD · TASHKENT",
+    "CODE & CREATIVITY · TASHKENT",
     2.4,
     0.22,
     0.25,
@@ -721,7 +717,7 @@ export async function createWorkshop(host, options) {
   cylinder(0.17, 0.1, -1.85, 1.75, 0.76, 0x2e2c3c, aboutGroup);
 
   label(
-    "CHUQUR MANTIQ · TOZA KOD",
+    "DEEP LOGIC · CLEAN CODE",
     2.4,
     0.15,
     0,
@@ -779,7 +775,7 @@ export async function createWorkshop(host, options) {
     color: "#ffd152",
     font: "600",
   });
-  label("TOSHKENT · TUNGI LABORATORIYA", 3.2, 0.16, 0, 3.92, 1.44, {
+  label("TASHKENT · NIGHT LABORATORY", 3.2, 0.16, 0, 3.92, 1.44, {
     size: 40,
     color: "#00e5d0",
     font: "500",
@@ -879,7 +875,7 @@ export async function createWorkshop(host, options) {
 
   box(1.7, 0.34, 0.07, -0.4, 5.35, 0.04, 0x1c2138, honorsGroup);
   label(
-    "NATIJALAR · HONORS ✦",
+    "HONORS & AWARDS ✦",
     1.6,
     0.24,
     -0.4,
@@ -899,7 +895,7 @@ export async function createWorkshop(host, options) {
   box(1.26, 2.36, 0.03, 3.34, 1.6, 1.25, liquidGlassMat, projectsGroup);
 
   label(
-    "LOYIHALAR · PROJECTS",
+    "FEATURED PROJECTS",
     1.18,
     0.25,
     3.34,
@@ -957,7 +953,7 @@ export async function createWorkshop(host, options) {
   box(0.16, 0.035, 0.015, 3.86, 1.04, 1.203, 0x0f1424, projectsGroup);
   rounded(0.82, 0.29, 0.035, 3.25, 0.6, 1.195, 0x0e1526, 0.03, projectsGroup);
   label(
-    "TANLANG / SELECT",
+    "SELECT CARTRIDGE",
     0.77,
     0.15,
     3.25,
@@ -976,7 +972,7 @@ export async function createWorkshop(host, options) {
   rounded(0.85, 1.18, 0.58, -3.45, 1.94, 1.8, 0x8a5e3c, 0.07, payphoneGroup);
   rounded(0.7, 0.93, 0.03, -3.45, 1.98, 2.106, 0x182234, 0.03, payphoneGroup);
   label(
-    ["ALOQA", "HOTLINE"],
+    ["HOTLINE", "DISPATCH"],
     0.54,
     0.46,
     -3.45,
@@ -1017,12 +1013,12 @@ export async function createWorkshop(host, options) {
     payphoneGroup,
   );
 
-  // Physical Signpost with Central Asian Bilingual Phrasing
+  // Physical Signpost with English Phrasing
   cylinder(0.045, 3.5, -4.07, 1.99, 2.72, 0x4a5367);
   const signBoards = [
-    ["LOYIHALAR · PROJECTS →", 2.85, 0x184282, "#80fff1", "projects"],
-    ["← DASTURCHI · ABOUT", 2.39, 0x6e2c4c, "#ffa5e1", "about"],
-    ["ALOQA · HOTLINE ↗", 1.93, 0x7a5a38, "#ffdd95", "contact"],
+    ["PROJECTS →", 2.85, 0x184282, "#80fff1", "projects"],
+    ["← ABOUT ME", 2.39, 0x6e2c4c, "#ffa5e1", "about"],
+    ["SAY HELLO ↗", 1.93, 0x7a5a38, "#ffdd95", "contact"],
   ];
   for (const [text, y, color, ink, id] of signBoards) {
     const g = new THREE.Group();
@@ -1129,7 +1125,7 @@ export async function createWorkshop(host, options) {
     robot,
   );
 
-  // Exterior conduit and illuminated OCHIQ / OPEN sign
+  // Exterior conduit and illuminated OPEN sign
   for (const [x, z, h] of [
     [-3.3, -1.6, 6.4],
     [4.35, -1.5, 6.65],
@@ -1163,7 +1159,7 @@ export async function createWorkshop(host, options) {
   box(0.5, 0.08, 0.43, 4.35, 5.76, 0.25, 0x434557);
   box(0.43, 0.02, 0.34, 4.35, 5.7, 0.25, goldGlow);
 
-  // OCHIQ / OPEN sign
+  // OPEN sign
   const openSign = new THREE.Group();
   openSign.position.set(-2.69, 2.63, 0.24);
   openSign.rotation.y = -Math.PI / 2;
@@ -1171,13 +1167,13 @@ export async function createWorkshop(host, options) {
   rounded(0.68, 1.49, 0.1, 0, 0, 0, 0x1b2b3f, 0.03, openSign);
   frame(0.58, 1.37, 0, 0, 0.065, cyanGlow, openSign, 0.012);
   label(
-    ["O", "C", "H", "I", "Q"],
+    ["O", "P", "E", "N"],
     0.38,
     1.16,
     0,
     0,
     0.08,
-    { size: 84, width: 256, height: 1024, color: "#80ffe8" },
+    { size: 96, width: 256, height: 1024, color: "#80ffe8" },
     openSign,
   );
 
@@ -1304,11 +1300,11 @@ export async function createWorkshop(host, options) {
   // 1.00: Contact (Angled view of payphone booth and street signpost)
   const cameraCurve = new THREE.CatmullRomCurve3(
     [
-      v3(14.2, 8.5, 17.2), // Station 0: Home
-      v3(10.2, 5.8, 13.0),  // Station 1: Projects
-      v3(3.5, 4.2, 10.5),   // Station 2: About
-      v3(6.8, 9.8, 14.5),  // Station 3: Honors (High over roof, NO clipping!)
-      v3(-9.5, 5.2, 13.2), // Station 4: Contact
+      v3(9.0, 5.2, 11.5),  // Station 0: Home (Zoomed in & heroic)
+      v3(6.8, 3.6, 7.2),   // Station 1: Projects (Vending machine & cartridges)
+      v3(2.2, 3.2, 6.8),   // Station 2: About (Workbench, GLSL screen, Tea set, Robot)
+      v3(4.2, 7.6, 7.8),   // Station 3: Honors (Rooftop Star Trophy, clear over marquee)
+      v3(-6.5, 3.4, 7.2),  // Station 4: Contact (Payphone & Signpost)
     ],
     false,
     "catmullrom",
@@ -1317,11 +1313,11 @@ export async function createWorkshop(host, options) {
 
   const targetCurve = new THREE.CatmullRomCurve3(
     [
-      v3(0, 2.3, 0),       // Station 0: Home
-      v3(2.5, 2.0, 0.8),   // Station 1: Projects
-      v3(-0.6, 2.2, 0.8),  // Station 2: About
-      v3(-0.3, 4.8, -0.3), // Station 3: Honors (Rooftop 8-pointed star trophy)
-      v3(-2.8, 2.1, 1.4),  // Station 4: Contact (Payphone & signpost)
+      v3(0, 2.2, 0),        // Station 0: Home
+      v3(3.2, 1.8, 1.0),    // Station 1: Projects
+      v3(-0.4, 2.0, 0.9),   // Station 2: About
+      v3(-0.4, 4.85, 0.05), // Station 3: Honors
+      v3(-3.2, 2.0, 1.6),   // Station 4: Contact
     ],
     false,
     "catmullrom",
@@ -1395,26 +1391,32 @@ export async function createWorkshop(host, options) {
     }
   }
 
+  // Optimized Floor Reflection: throttled updates & hide non-essential particles during reflection pass
+  let lastReflectFrame = 0;
   const originalReflect = floor.onBeforeRender;
   floor.onBeforeRender = function (...args) {
-    if (frameCount % 3 === 0 || dirty)
+    const step = mobile() ? 3 : 2;
+    if (frameCount - lastReflectFrame >= step) {
+      lastReflectFrame = frameCount;
+      rain.visible = false;
+      dustParticles.visible = false;
+      teaSteam.visible = false;
       originalReflect.apply(this, args);
+      rain.visible = true;
+      dustParticles.visible = true;
+      teaSteam.visible = true;
+    }
   };
 
   function draw(now) {
     raf = 0;
     if (document.hidden) return;
-    const interval = mobile() ? 1000 / 30 : 1000 / 60;
-    if (now - lastFrame < interval) {
-      schedule();
-      return;
-    }
-    const dt = lastFrame ? Math.min((now - lastFrame) / 1000, 0.08) : 0;
+    const dt = lastFrame ? Math.min((now - lastFrame) / 1000, 0.05) : 0.016;
     lastFrame = now;
 
     // Smooth scroll camera interpolation along the spline
     if (motion) {
-      scrollProgress += (targetScrollProgress - scrollProgress) * 0.085;
+      scrollProgress += (targetScrollProgress - scrollProgress) * 0.095;
     } else {
       scrollProgress = targetScrollProgress;
     }
@@ -1429,14 +1431,14 @@ export async function createWorkshop(host, options) {
 
       if (mobile()) {
         const diff = baseCamPos.clone().sub(baseTarget);
-        diff.multiplyScalar(1.35);
-        diff.y += 1.2;
+        diff.multiplyScalar(1.22);
+        diff.y += 0.6;
         baseCamPos.copy(baseTarget).add(diff);
       }
 
       // Smooth mouse parallax
-      const parX = pointer.x * (mobile() ? 0.12 : 0.35);
-      const parY = pointer.y * (mobile() ? 0.09 : 0.25);
+      const parX = pointer.x * (mobile() ? 0.12 : 0.3);
+      const parY = pointer.y * (mobile() ? 0.08 : 0.2);
 
       camera.position.set(baseCamPos.x + parX, baseCamPos.y + parY, baseCamPos.z);
       controls.target.set(baseTarget.x, baseTarget.y, baseTarget.z);
@@ -1535,7 +1537,7 @@ export async function createWorkshop(host, options) {
     camera.updateProjectionMatrix();
     renderer.setSize(w, h, false);
     composer.setSize(w, h);
-    bloom.resolution.set(w * 0.7, h * 0.7);
+    bloom.resolution.set(Math.floor(w * 0.5), Math.floor(h * 0.5));
     dirty = true;
     schedule();
   }

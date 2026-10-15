@@ -221,9 +221,10 @@ button:focus-visible, a:focus-visible {
   border-radius: 50%;
   font-size: 13px;
   transition: all 0.25s ease;
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
   color: #d1d7ee;
+  transform: translateZ(0);
   box-shadow:
     0 8px 24px rgba(0, 0, 0, 0.45),
     inset 0 1px 1px rgba(255, 255, 255, 0.35);
@@ -236,7 +237,7 @@ button:focus-visible, a:focus-visible {
   box-shadow:
     0 0 20px var(--turquoise-glow),
     inset 0 1px 1px rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
+  transform: translateY(-2px) translateZ(0);
 }
 
 .sound-icon {
@@ -308,13 +309,13 @@ button:focus-visible, a:focus-visible {
 }
 
 /* =========================================================
-   AUTHENTIC LIQUID GLASS CARDS
+   AUTHENTIC LIQUID GLASS CARDS (GPU OPTIMIZED)
    ========================================================= */
 .story-card {
   pointer-events: auto;
   background: var(--liquid-glass-bg);
-  backdrop-filter: blur(36px) saturate(210%);
-  -webkit-backdrop-filter: blur(36px) saturate(210%);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
   border: 1px solid var(--liquid-glass-border);
   border-radius: 24px;
   padding: 36px 42px;
@@ -327,6 +328,8 @@ button:focus-visible, a:focus-visible {
   width: 100%;
   position: relative;
   overflow: hidden;
+  will-change: transform;
+  transform: translateZ(0);
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.35s ease;
 }
 
@@ -507,12 +510,10 @@ button:focus-visible, a:focus-visible {
   scrollbar-color: rgba(0, 229, 208, 0.25) transparent;
 }
 
-/* Liquid Glass Project Box */
+/* Liquid Glass Project Box (GPU Optimized) */
 .project-box {
-  background: rgba(16, 25, 48, 0.65);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(16, 25, 48, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 14px;
   padding: 18px 20px;
   box-shadow:
@@ -522,7 +523,7 @@ button:focus-visible, a:focus-visible {
 }
 
 .project-box:hover {
-  background: rgba(22, 36, 68, 0.85);
+  background: rgba(22, 36, 68, 0.92);
   border-color: rgba(0, 229, 208, 0.5);
   box-shadow:
     0 12px 35px rgba(0, 0, 0, 0.45),
@@ -836,7 +837,7 @@ button:focus-visible, a:focus-visible {
   position: absolute;
   bottom: 28px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateZ(0);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -848,8 +849,8 @@ button:focus-visible, a:focus-visible {
     0 16px 45px rgba(0, 0, 0, 0.7),
     inset 0 1.5px 1px rgba(255, 255, 255, 0.4),
     0 0 30px rgba(0, 229, 208, 0.1);
-  backdrop-filter: blur(36px) saturate(200%);
-  -webkit-backdrop-filter: blur(36px) saturate(200%);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
   z-index: 30;
 }
 
@@ -941,11 +942,11 @@ button:focus-visible, a:focus-visible {
   position: absolute;
   top: 86px;
   left: 50%;
-  transform: translateX(-50%) translateY(-10px);
+  transform: translateX(-50%) translateY(-10px) translateZ(0);
   padding: 10px 20px;
   background: var(--liquid-glass-bg);
-  backdrop-filter: blur(36px) saturate(200%);
-  -webkit-backdrop-filter: blur(36px) saturate(200%);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
   border: 1px solid var(--turquoise);
   border-radius: 30px;
   box-shadow:
@@ -964,7 +965,7 @@ button:focus-visible, a:focus-visible {
 
 .interact-toast.show {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translateX(-50%) translateY(0) translateZ(0);
 }
 
 /* Scene Footer */

@@ -373,20 +373,20 @@ async function startWorld() {
       onInteract: (type) => {
         playSfx(type);
         if (type === "robot") {
-          showToast("🤖 EL-01: 'Assalomu alaykum! Toshkent Night Lab-ga xush kelibsiz!'");
+          showToast("🤖 EL-01: 'Welcome to the Night Lab! Ready to explore?'");
         } else if (type === "choynak") {
-          showToast("🍵 Issiq ko'k choy damlandi (Hot green tea brewed in Uzbek porcelain choynak!)");
+          showToast("🍵 Fresh hot tea brewed on the workbench.");
         } else if (type === "monitor") {
-          showToast("🖥️ Monitor rejimi almashdi: Cyber Grid ⇄ Synthesizer Wave ⇄ Silk Road Ikat");
+          showToast("🖥️ Display switched: Cyber Horizon ⇄ Audio Wave ⇄ Digital Ikat");
         } else if (type === "trophy") {
-          showToast("🏆 8-qirrali Yulduz: Purple Comet 1st Place & Olimpiadalar!");
+          showToast("🏆 Star Trophy: Purple Comet 1st Place & Olympiad Honors!");
         } else if (type === "phone") {
-          showToast("📞 Telegram @elshod_gosling ochilmoqda...");
+          showToast("📞 Opening Telegram @elshod_gosling...");
           setTimeout(() => {
             window.open("https://t.me/elshod_gosling", "_blank");
           }, 600);
         } else if (type === "cartridge") {
-          showToast("📼 Loyiha tanlandi (Project cartridge selected)");
+          showToast("📼 Project cartridge selected: Viewing projects");
           scrollToStation(1);
         }
       },
@@ -399,7 +399,7 @@ async function startWorld() {
     });
 
     document.body.classList.add("world-ready");
-    if (loadStatus) loadStatus.textContent = "CHIRAQLAR YONDI · SCROLL TO EXPLORE.";
+    if (loadStatus) loadStatus.textContent = "NEON ONLINE · SCROLL TO EXPLORE.";
     handleScroll();
   } catch (error) {
     console.warn(
